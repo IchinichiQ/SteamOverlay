@@ -1,0 +1,65 @@
+﻿<UserControl x:Class="SteamOverlay.SteamOverlayGameConfigurationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:steamoverlay="clr-namespace:SteamOverlay"
+             mc:Ignorable="d"
+             d:DesignHeight="375" d:DesignWidth="700" DataContext="{Binding RelativeSource={RelativeSource Self}}">
+
+    <UserControl.Resources>
+        <Style x:Key="LabelTextbox" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="DockPanel.Dock" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel Margin="10" Grid.Row="0">
+            <Label Content="{DynamicResource LOCSteamOverlay_GameSettingsLaunchSettingsTitle}" Margin="0,0,0,5"/>
+            <Separator Margin="0,0,0,5"/>
+            <DockPanel Margin="0,0,0,0">
+                <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsExePathLabel}" Style="{StaticResource LabelTextbox}"/>
+                <Button Margin="10,0,0,0" Content="{DynamicResource LOCSteamOverlay_SettingsBrowseButtonText}" DockPanel.Dock="Right" Click="ButtonBrowseExeFile_Click"/>
+                <TextBox Margin="10,0,0,0" Text="{Binding configData.exePath}"/>
+            </DockPanel>
+            <DockPanel Margin="0,10,0,0">
+                <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsWorkDirLabel}" Style="{StaticResource LabelTextbox}"/>
+                <Button Margin="10,0,0,0" Content="{DynamicResource LOCSteamOverlay_SettingsBrowseButtonText}" DockPanel.Dock="Right" Click="ButtonBrowseWorkingDir_Click"/>
+                <TextBox Margin="10,0,0,0" Text="{Binding configData.workingDir}"/>
+            </DockPanel>
+            <DockPanel Margin="0,10,0,0">
+                <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsArgumentsLabel}" Style="{StaticResource LabelTextbox}"/>
+                <TextBox Margin="10,0,0,0" Text="{Binding configData.arguments}"/>
+            </DockPanel>
+            <DockPanel Margin="0,10,0,0">
+                <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsResumingDelayLabel}" Style="{StaticResource LabelTextbox}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsResumingDelayToolTip}"/>
+                <TextBox Margin="10,0,0,0" Text="{Binding configData.resumingDelay}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsResumingDelayToolTip}"/>
+            </DockPanel>
+
+            <Label Content="{DynamicResource LOCSteamOverlay_GameSettingsSteamOverlaySettingsTitle}" Margin="0,20,0,5"/>
+            <Separator Margin="0,0,0,5"/>
+            <DockPanel>
+                <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsSteamDirectoryLabel}" Style="{StaticResource LabelTextbox}"/>
+                <Button Margin="10,0,0,0" Content="{DynamicResource LOCSteamOverlay_SettingsBrowseButtonText}" DockPanel.Dock="Right" Click="ButtonBrowseSteamDir_Click"/>
+                <TextBox Margin="10,0,0,0" Text="{Binding configData.steamDir}"/>
+            </DockPanel>
+            <DockPanel Margin="0,10,0,0">
+                <TextBlock Text="App ID:" Style="{StaticResource LabelTextbox}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsAppIdToolTip}"/>
+                <TextBox Margin="10,0,0,0" Text="{Binding configData.gameId}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsAppIdToolTip}"/>
+            </DockPanel>
+            <CheckBox IsChecked="{Binding configData.ENABLE_VK_LAYER_VALVE_steam_overlay_1}" Content="ENABLE__VK__LAYER__VALVE__steam__overlay__1" Margin="0,10,0,0" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsEnableVulkanLayerToolTip}"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Grid.Row="1">
+            <Button Margin="0,0,10,10" Padding="15,8,15,8" Content="{DynamicResource LOCSteamOverlay_SettingsSaveButtonText}" Click="ButtonSave_Click"/>
+            <Button Margin="0,0,10,10" Padding="15,8,15,8" Content="{DynamicResource LOCSteamOverlay_SettingsCancelButtonText}" Click="ButtonCancel_Click"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

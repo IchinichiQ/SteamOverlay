@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <sys:String x:Key="LOCSteamOverlay_PluginSettingsTitle">Настройки по умолчанию</sys:String>
+	
+	<sys:String x:Key="LOCSteamOverlay_GameSettingsWindowTitle">настройки оверлея</sys:String>
+	
+	<sys:String x:Key="LOCSteamOverlay_SettingsBrowseButtonText">Обзор…</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_SettingsSaveButtonText">Сохранить</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_SettingsCancelButtonText">Отменить</sys:String>
+	
+    <sys:String x:Key="LOCSteamOverlay_GameSettingsLaunchSettingsTitle">Настройки запуска</sys:String>
+    <sys:String x:Key="LOCSteamOverlay_GameSettingsExePathLabel">Путь к исполняемому файлу:</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_GameSettingsWorkDirLabel">Рабочая папка:</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_GameSettingsArgumentsLabel">Аргументы:</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_GameSettingsResumingDelayLabel">Задержка возобновления процесса игры (мс):</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_GameSettingsResumingDelayToolTip" xml:space="preserve">Задержка между созданием процесса и его запуском.&#x0a;Увеличьте это время, если Playnite не может корректно определить запущена ли игра. Задержки в 500 мс будет достаточно для любой игры.</sys:String>
+	
+	<sys:String x:Key="LOCSteamOverlay_GameSettingsSteamOverlaySettingsTitle">Настройки оверлея Steam</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_GameSettingsSteamDirectoryLabel">Папка Steam:</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_GameSettingsAppIdToolTip">ID игры, которая будет показана в оверлее Steam.</sys:String>
+    <sys:String x:Key="LOCSteamOverlay_GameSettingsEnableVulkanLayerToolTip">Без этого параметра оверелей не будет работать в играх с Vulkan. Если ваша игра вылетает, попробуйте отключить его.</sys:String>
+
+    <sys:String x:Key="LOCSteamOverlay_DialogSelectFileGameExe">Исполняемый файл игры</sys:String>
+	
+	<sys:String x:Key="LOCSteamOverlay_MenuSectionName">Оверлей Steam</sys:String>
+    <sys:String x:Key="LOCSteamOverlay_MenuItemEnableSteamOverlay">Включить оверлей Steam</sys:String>
+    <sys:String x:Key="LOCSteamOverlay_MenuItemDisableSteamOverlay">Выключить оверлей Steam</sys:String>
+    <sys:String x:Key="LOCSteamOverlay_MenuItemConfigureSteamOverlay">Настроить оверлей Steam</sys:String>
+	
+    <sys:String x:Key="LOCSteamOverlay_MessageBoxErrorTitle">Ошибка плагина SteamOverlay</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_MessageBoxErrorTextFirstLaunchNeeded">Чтобы изменить настройки включите оверлей Steam для этой игры хотя бы один раз</sys:String>
+    <sys:String x:Key="LOCSteamOverlay_MessageBoxErrorTextNoPlayAction">У этой игры нет действия "Играть".</sys:String>
+    <sys:String x:Key="LOCSteamOverlay_MessageBoxErrorTextSeveralPlayActions">У этой игры больше одного действия "Играть".</sys:String>
+    <sys:String x:Key="LOCSteamOverlay_MessageBoxErrorTextNotFileType">Действие "Играть" должно иметь тип файла.</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_MessageBoxTitleFirstTimeUse">Первое использование оверлея Steam</sys:String>
+    <sys:String x:Key="LOCSteamOverlay_MessageBoxTextFirstTimeUse" xml:space="preserve">Похоже это первый раз, как вы используете плагин SteamOverlay. Вот краткая инструкция:&#x0a;&#x0a;1. Когда вы включаете оверлей для игры, плагин заменит действие "Играть" на свое. Что-бы вернуть старое действие "Играть", отключите оверлей для этой игры.&#x0a;2. Не изменяйте новое действие "Играть", созданное плагином! Это может повлечь за собой ошибки.&#x0a;3. Не используйте плагин в играх с античитом! Это может привести к бану вашего аккаунта, так как плагин совершает инъекцию dll в процесс игры.&#x0a;&#x0a;Для большей информации посетите страницу github плагина.&#x0a;Вы хотите продолжите?</sys:String>
+
+    <sys:String x:Key="LOCSteamOverlay_ErrorPlayActionFileNotFound">Файл действия "Играть" не существует.</sys:String>
+</ResourceDictionary>

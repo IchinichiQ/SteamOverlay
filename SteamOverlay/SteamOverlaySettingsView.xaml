@@ -1,0 +1,28 @@
+﻿<UserControl x:Class="SteamOverlay.SteamOverlaySettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             mc:Ignorable="d"
+             d:DesignHeight="400" d:DesignWidth="600">
+    <Grid>
+        <StackPanel Margin="20">
+            <Label Content="{DynamicResource LOCSteamOverlay_PluginSettingsTitle}" Margin="0,0,0,5"/>
+            <Separator Margin="0,0,0,5"/>
+            <DockPanel>
+                <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsSteamDirectoryLabel}" VerticalAlignment="Center"/>
+                <Button Margin="10,0,0,0" Content="{DynamicResource LOCSteamOverlay_SettingsBrowseButtonText}" DockPanel.Dock="Right" Command="{Binding BrowseSteamDir}"/>
+                <TextBox Margin="10,0,0,0" Text="{Binding Settings.DefaultSteamDir}"/>
+            </DockPanel>
+            <DockPanel Margin="0,10,0,0">
+                <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsResumingDelayLabel}" VerticalAlignment="Center" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsResumingDelayToolTip}"/>
+                <TextBox Margin="10,0,0,0" Text="{Binding Settings.DefaultResumingDelay}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsResumingDelayToolTip}"/>
+            </DockPanel>
+            <DockPanel Margin="0,10,0,0">
+                <TextBlock Text="App ID:" VerticalAlignment="Center" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsAppIdToolTip}"/>
+                <TextBox Margin="10,0,0,0" Text="{Binding Settings.DefaultGameId}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsAppIdToolTip}"/>
+            </DockPanel>
+            <CheckBox IsChecked="{Binding Settings.DefaultENABLE_VK_LAYER_VALVE_steam_overlay_1}" Content="ENABLE__VK__LAYER__VALVE__steam__overlay__1" Margin="0,10,0,0" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsEnableVulkanLayerToolTip}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>
