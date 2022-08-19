@@ -14,13 +14,15 @@ namespace SteamOverlay
         private int gameId = 0;
         private int resumingDelay = 0;
         private bool ENABLE_VK_LAYER_VALVE_steam_overlay_1 = true;
-        private bool isFirstTimeUse = true;
+        private bool isFirstTimeEnablingOverlay = true;
+        private bool isEmptySteamDirMessageViewed = false;
 
         public string DefaultSteamDir { get => steamDir; set => SetValue(ref steamDir, value); }
         public int DefaultGameId { get => gameId; set => SetValue(ref gameId, value); }
         public int DefaultResumingDelay { get => resumingDelay; set => SetValue(ref resumingDelay, value); }
         public bool DefaultENABLE_VK_LAYER_VALVE_steam_overlay_1 { get => ENABLE_VK_LAYER_VALVE_steam_overlay_1; set => SetValue(ref ENABLE_VK_LAYER_VALVE_steam_overlay_1, value); }
-        public bool IsFirstTimeUse { get => isFirstTimeUse; set => SetValue(ref isFirstTimeUse, value); }
+        public bool IsFirstTimeEnablingOverlay { get => isFirstTimeEnablingOverlay; set => SetValue(ref isFirstTimeEnablingOverlay, value); }
+        public bool IsEmptySteamDirMessageViewed { get => isEmptySteamDirMessageViewed; set => SetValue(ref isEmptySteamDirMessageViewed, value); }
     }
 
     public class SteamOverlaySettingsViewModel : ObservableObject, ISettings

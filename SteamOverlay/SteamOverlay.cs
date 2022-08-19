@@ -37,6 +37,21 @@ namespace SteamOverlay
             {
                 HasSettings = true
             };
+
+            if (String.IsNullOrEmpty(settings.Settings.DefaultSteamDir))
+            {
+                string steamDir = GetSteamDir();
+                if (steamDir == null && !settings.Settings.IsEmptySteamDirMessageViewed)
+                {
+                    PlayniteApi.Dialogs.ShowMessage(ResourceProvider.GetString("LOCSteamOverlay_MessageBoxTextEmptySteamDir"), ResourceProvider.GetString("LOCSteamOverlay_MessageBoxTitleEmptySteamDir"), MessageBoxButton.OK);
+                    settings.Settings.IsEmptySteamDirMessageViewed = true;
+                    settings.EndEdit();
+                }
+                else
+                {
+                    settings.Settings.DefaultSteamDir = steamDir;
+                }
+            }
         }
 
         public override IEnumerable<GameMenuItem> GetGameMenuItems(GetGameMenuItemsArgs args)
@@ -55,13 +70,13 @@ namespace SteamOverlay
                     Action = (a) =>
                     {
 
-                        if (settings.Settings.IsFirstTimeUse)
+                        if (settings.Settings.IsFirstTimeEnablingOverlay)
                         {
                             MessageBoxResult res = PlayniteApi.Dialogs.ShowMessage(ResourceProvider.GetString("LOCSteamOverlay_MessageBoxTextFirstTimeUse"), ResourceProvider.GetString("LOCSteamOverlay_MessageBoxTitleFirstTimeUse"), MessageBoxButton.YesNo);
                             if (res == MessageBoxResult.No)
                                 return;
 
-                            settings.Settings.IsFirstTimeUse = false;
+                            settings.Settings.IsFirstTimeEnablingOverlay = false;
                             settings.EndEdit();
                         }
 
@@ -207,6 +222,19 @@ namespace SteamOverlay
                     throw new FileNotFoundException(ResourceProvider.GetString("LOCSteamOverlay_ErrorPlayActionFileNotFound"));
                 }
             }
+        }
+
+        private string GetSteamDir()
+        {
+            string steamDir = (string)Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", null);
+            if (steamDir != null)
+                return steamDir;
+
+            string defaultSteamDir = @"C:\Program Files (x86)\Steam";
+            if (Directory.Exists(defaultSteamDir))
+                return defaultSteamDir;
+
+            return null;
         }
 
         public override void OnGameInstalled(OnGameInstalledEventArgs args)

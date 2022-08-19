@@ -34,6 +34,8 @@
     <sys:String x:Key="LOCSteamOverlay_MessageBoxErrorTextNotFileType">Play action must be a file type.</sys:String>
 	<sys:String x:Key="LOCSteamOverlay_MessageBoxTitleFirstTimeUse">Steam overlay first time use</sys:String>
     <sys:String x:Key="LOCSteamOverlay_MessageBoxTextFirstTimeUse" xml:space="preserve">Looks like this is the first time you are using the SteamOverlay plugin. Here is quick tutroial:&#x0a;&#x0a;1. When you turn on the overlay for the game, the plugin will replace the game's play action with its own. To return the old play action, turn off the overlay for that game.&#x0a;2. Do not change the new play action created by the plugin! It may cause errors.&#x0a;3. Do not use plugin in games with anticheat! This may result in ban of your game account, as plugin injects dll into game process.&#x0a;&#x0a;For more information, visit the plugin's github page.&#x0a;Do you want to continue?</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_MessageBoxTitleEmptySteamDir">Steam overlay plugin warning</sys:String>
+    <sys:String x:Key="LOCSteamOverlay_MessageBoxTextEmptySteamDir" xml:space="preserve">Unable to automatically find the Steam directory on your computer. Please set it in the plugin settings.&#x0a;This message will not appear again.</sys:String>
 		
     <sys:String x:Key="LOCSteamOverlay_ErrorPlayActionFileNotFound">Play action file doesn't exist.</sys:String>
 </ResourceDictionary>
