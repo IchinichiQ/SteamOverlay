@@ -34,7 +34,6 @@ After starting the game via Playnite, the injector creates a suspended game proc
 
 ## Features I want to add in the future
 
-- Steam App ID search dialog by game name
 - Dialog to select the play action, on the basis of which the plugin's play action will be created
 - Support play actions with types other than file
 

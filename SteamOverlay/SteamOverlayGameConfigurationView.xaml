@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:steamoverlay="clr-namespace:SteamOverlay"
              mc:Ignorable="d"
-             d:DesignHeight="375" d:DesignWidth="700" DataContext="{Binding RelativeSource={RelativeSource Self}}">
+             d:DesignHeight="400" d:DesignWidth="700" DataContext="{Binding RelativeSource={RelativeSource Self}}">
 
     <UserControl.Resources>
         <Style x:Key="LabelTextbox" TargetType="TextBlock">
@@ -52,7 +52,8 @@
             </DockPanel>
             <DockPanel Margin="0,10,0,0">
                 <TextBlock Text="App ID:" Style="{StaticResource LabelTextbox}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsAppIdToolTip}"/>
-                <TextBox Margin="10,0,0,0" Text="{Binding configData.gameId}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsAppIdToolTip}"/>
+                <Button Margin="10,0,0,0" Content="{DynamicResource LOCSteamOverlay_GameSettingsSearchButtonText}" DockPanel.Dock="Right" Click="ButtonSearchGame_Click"/>
+                <TextBox Margin="10,0,0,0" x:Name="TextBoxGameId" Text="{Binding configData.gameId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsAppIdToolTip}"/>
             </DockPanel>
             <CheckBox IsChecked="{Binding configData.ENABLE_VK_LAYER_VALVE_steam_overlay_1}" Content="ENABLE__VK__LAYER__VALVE__steam__overlay__1" Margin="0,10,0,0" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsEnableVulkanLayerToolTip}"/>
         </StackPanel>

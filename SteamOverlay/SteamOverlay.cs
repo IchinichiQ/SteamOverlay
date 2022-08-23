@@ -104,8 +104,8 @@ namespace SteamOverlay
                             ShowMaximizeButton = false,
                         });
 
-                        window.Height = 390;
-                        window.MinHeight = 390;
+                        window.Height = 400;
+                        window.MinHeight = 400;
                         window.Width = 700;
                         window.MinWidth = 350;
                         window.Title = $"{selectedGame.Name} {ResourceProvider.GetString("LOCSteamOverlay_GameSettingsWindowTitle")}";

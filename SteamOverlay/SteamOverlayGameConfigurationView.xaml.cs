@@ -159,5 +159,27 @@ namespace SteamOverlay
 
             Window.GetWindow(this).Close();
         }
+
+        private void ButtonSearchGame_Click(object sender, RoutedEventArgs e)
+        {
+            var window = plugin.PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions());
+
+            window.Height = 600;
+            window.MinHeight = 300;
+            window.Width = 600;
+            window.MinWidth = 300;
+            window.Title = ResourceProvider.GetString("LOCSteamOverlay_SteamSearchWindowTitle");
+
+            var gameSearchView = new SteamGameSearch.SteamGameSearchView(plugin, game.Name);
+            window.Content = gameSearchView;
+
+            window.Owner = plugin.PlayniteApi.Dialogs.GetCurrentAppWindow();
+            window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+
+            window.ShowDialog();
+
+            if (gameSearchView.selectedGame != null)
+                TextBoxGameId.Text = gameSearchView.selectedGame.Id.ToString();
+        }
     }
 }

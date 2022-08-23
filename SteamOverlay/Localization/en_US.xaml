@@ -17,8 +17,14 @@
 	
 	<sys:String x:Key="LOCSteamOverlay_GameSettingsSteamOverlaySettingsTitle">Steam overlay settings</sys:String>
 	<sys:String x:Key="LOCSteamOverlay_GameSettingsSteamDirectoryLabel">Steam directory:</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_GameSettingsSearchButtonText">Search by name</sys:String>
 	<sys:String x:Key="LOCSteamOverlay_GameSettingsAppIdToolTip">The ID of the game that will be displayed in the Steam overlay.</sys:String>
     <sys:String x:Key="LOCSteamOverlay_GameSettingsEnableVulkanLayerToolTip">Without this parameter overlay will not work in games with Vulkan. If your game crashes, try turning it off.</sys:String>
+
+	<sys:String x:Key="LOCSteamOverlay_SteamSearchWindowTitle">Select the game whose AppID will be used</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_SteamSearchSearchButton">Search</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_SteamSearchSelectButton">Select</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_SteamSearchLoadingLabel">Loading...</sys:String>
 
     <sys:String x:Key="LOCSteamOverlay_DialogSelectFileGameExe">Game executable</sys:String>
 	

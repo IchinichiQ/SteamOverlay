@@ -17,8 +17,14 @@
 	
 	<sys:String x:Key="LOCSteamOverlay_GameSettingsSteamOverlaySettingsTitle">Настройки оверлея Steam</sys:String>
 	<sys:String x:Key="LOCSteamOverlay_GameSettingsSteamDirectoryLabel">Папка Steam:</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_GameSettingsSearchButtonText">Поиск по имени</sys:String>
 	<sys:String x:Key="LOCSteamOverlay_GameSettingsAppIdToolTip">ID игры, которая будет показана в оверлее Steam.</sys:String>
     <sys:String x:Key="LOCSteamOverlay_GameSettingsEnableVulkanLayerToolTip">Без этого параметра оверелей не будет работать в играх с Vulkan. Если ваша игра вылетает, попробуйте отключить его.</sys:String>
+
+	<sys:String x:Key="LOCSteamOverlay_SteamSearchWindowTitle">Выберите игру, чей App ID будет использован</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_SteamSearchSearchButton">Поиск</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_SteamSearchSelectButton">Выбрать</sys:String>
+	<sys:String x:Key="LOCSteamOverlay_SteamSearchLoadingLabel">Загрузка...</sys:String>
 
     <sys:String x:Key="LOCSteamOverlay_DialogSelectFileGameExe">Исполняемый файл игры</sys:String>
 	
