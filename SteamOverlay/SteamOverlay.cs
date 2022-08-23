@@ -228,7 +228,8 @@ namespace SteamOverlay
         {
             string steamDir = (string)Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", null);
             if (steamDir != null)
-                return steamDir;
+                // The path is stored in a registry with "/" instead of "\", so we need to fix it
+                return Path.GetFullPath(steamDir);
 
             string defaultSteamDir = @"C:\Program Files (x86)\Steam";
             if (Directory.Exists(defaultSteamDir))
