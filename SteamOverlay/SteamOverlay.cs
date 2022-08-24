@@ -184,6 +184,7 @@ namespace SteamOverlay
 
             game.GameActions.Remove(playAction);
             game.GameActions.Add(actionOverlay);
+            PlayniteApi.Database.Games.Update(game);
         }
 
         private void RemoveOverlayFromGame(Game game)
@@ -196,6 +197,7 @@ namespace SteamOverlay
 
             game.GameActions.Remove(overlayAction);
             game.GameActions.Add(gameConfig.originalPlayAction);
+            PlayniteApi.Database.Games.Update(game);
         }
 
         private bool GameHasOverlayAction(Game game)
