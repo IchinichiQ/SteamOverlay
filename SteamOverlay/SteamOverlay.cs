@@ -123,8 +123,8 @@ namespace SteamOverlay
 
         private void AddOverlayToGame(Game game)
         {
-            GameAction[] playActions = game.GameActions.Where(action => action.IsPlayAction).ToArray();
-            if (playActions.Length == 0)
+            GameAction[] playActions = game.GameActions?.Where(action => action.IsPlayAction).ToArray();
+            if (playActions == null || playActions.Length == 0)
             {
                 PlayniteApi.Dialogs.ShowErrorMessage(ResourceProvider.GetString("LOCSteamOverlay_MessageBoxErrorTextNoPlayAction"), ResourceProvider.GetString("LOCSteamOverlay_MessageBoxErrorTitle"));
                 return;
@@ -202,7 +202,7 @@ namespace SteamOverlay
 
         private bool GameHasOverlayAction(Game game)
         {
-            return game.GameActions.Any(action => action.Name == "SteamOverlay");
+            return game.GameActions?.Any(action => action.Name == "SteamOverlay") ?? false;
         }
 
         private string GetActionFileAbsolutePath(Game game, GameAction action)
@@ -248,11 +248,6 @@ namespace SteamOverlay
         public override void OnGameStarted(OnGameStartedEventArgs args)
         {
             // Add code to be executed when game is started running.
-        }
-
-        public override void OnGameStarting(OnGameStartingEventArgs args)
-        {
-            // Add code to be executed when game is preparing to be started.
         }
 
         public override void OnGameStopped(OnGameStoppedEventArgs args)
