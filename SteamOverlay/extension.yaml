@@ -1,7 +1,7 @@
 ﻿Id: SteamOverlay_eb3e6a5d-4bc1-4738-a328-cc62959750a1
 Name: SteamOverlay
 Author: Ichinichi
-Version: 0.1
+Version: 0.2
 Module: SteamOverlay.dll
 Type: GenericPlugin
 Icon: icon.png
