@@ -18,7 +18,7 @@ This can lead to a ban of your account, because the plugin injects a dll into th
 
 ## How to install it?
 
-1. [Download](https://github.com/IchinichiQ/SteamOverlay/releases/download/v0.1/SteamOverlay_eb3e6a5d-4bc1-4738-a328-cc62959750a1_0_1.pext) the latest version from releases.
+1. Download the latest version from [releases](https://github.com/IchinichiQ/SteamOverlay/releases).
 2. Open the downloaded file.
 3. Confirm the installation in the opened Playnite window.
 
