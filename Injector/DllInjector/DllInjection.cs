@@ -158,9 +158,13 @@ namespace DllInjector
 
         static IntPtr WriteIntoProcess(IntPtr hProcess, byte[] bytesToWrite, uint bytesSize, uint protect)
         {
-            IntPtr remoteAddress = VirtualAllocEx(hProcess, IntPtr.Zero, bytesSize, MEM_COMMIT | MEM_RESERVE, protect);
+            IntPtr remoteAddress = VirtualAllocEx(hProcess, IntPtr.Zero, bytesSize + 1, MEM_COMMIT | MEM_RESERVE, protect);
             if (remoteAddress == IntPtr.Zero)
-                throw new Exception($"Could not allocate memory in the remote process");
+            {
+                int err = Marshal.GetLastWin32Error();
+                VirtualFreeEx(hProcess, remoteAddress, bytesSize, MEM_FREE);
+                throw new Exception($"VirtualAllocEx error: 0x{err:X}");
+            }
 
             IntPtr dummy = new IntPtr();
             if (!WriteProcessMemory(hProcess, remoteAddress, bytesToWrite, bytesSize, out dummy))

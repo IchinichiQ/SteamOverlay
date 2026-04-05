@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Collections;
 using static DllInjector.Win32Api;
 using static DllInjector.Win32Constants;
@@ -17,13 +16,17 @@ namespace DllInjector
 {
     internal class Program
     {
+        private const int InjectionAttempts = 3;
+        
         static void Main(string[] args)
         {
             try
             {
+                // TODO: Make logs auto clear by size limit
                 if (!args.Contains("-noClearLog"))
                     Logger.ClearLog();
 
+                // TODO: Add auto launch
                 if (Process.GetProcessesByName("steam").Length == 0)
                     throw new Exception("Steam is not running!");
 
@@ -37,6 +40,7 @@ namespace DllInjector
 
                 string json = File.ReadAllText(configPath);
                 GameConfig gameConfig = JsonConvert.DeserializeObject<GameConfig>(json);
+                // TODO: Use common config for all games
                 InjectorConfig config = gameConfig.injectorConfig;
 
                 if (!File.Exists(config.exePath))
@@ -49,28 +53,26 @@ namespace DllInjector
                     throw new FileNotFoundException("There is no GameOverlayRenderer.dll file in the steam directory!");
                 if (!Directory.Exists(config.workingDir))
                     throw new DirectoryNotFoundException("Working directory doesn't exists!");
-
+                
+                // TODO: Log config object instead of parameters
                 Logger.WriteLine($"Config path: {configPath}");
                 Logger.WriteLine($"Exe: {config.exePath}");
+                Logger.WriteLine($"Process name: {config.processName}");
                 Logger.WriteLine($"Steam directory: {config.steamDir}");
                 Logger.WriteLine($"Working directory: {config.workingDir}");
                 Logger.WriteLine($"Arguments: {config.arguments}");
                 Logger.WriteLine($"Game id: {config.gameId}");
-                Logger.WriteLine($"Resuming delay: {config.resumingDelay}");
                 Logger.WriteLine($"ENABLE_VK_LAYER_VALVE_steam_overlay_1: {config.ENABLE_VK_LAYER_VALVE_steam_overlay_1}\n");              
 
                 Dictionary<string, string> variables = new Dictionary<string, string>();
-                variables.Add("SteamOverlayGameId", config.gameId.ToString());
+                variables.Add("SteamOverlayGameId", config.gameId);
                 variables.Add("ENABLE_VK_LAYER_VALVE_steam_overlay_1", config.ENABLE_VK_LAYER_VALVE_steam_overlay_1 ? "1" : "0");
-                //variables.Add("SteamGameId", gameId);
 
                 LaunchAndInject(config, variables);
             }
             catch (Exception ex)
             {
-                Logger.WriteLine(ex.ToString());
-
-                if (ex is ElevationRequiredException)
+                if (ex.ToString().Contains("0x5") || ex.ToString().Contains("0x80004005"))
                 {
                     Logger.WriteLine("Restarting injector with admin rights...");
                     RunInjectorWithAdminRights($"-configPath {args[1]} -noClearLog");
@@ -84,38 +86,66 @@ namespace DllInjector
                     Console.WriteLine(ex.ToString());
 
                     Console.WriteLine("\n" + "Press any key to exit...");
-                    Console.ReadKey();
+                    Console.Read();
                 }
             }
 
             Logger.WriteLine("Closing...");
         }
 
-        public static uint LaunchAndInject(InjectorConfig config, Dictionary<String, String> environmentVariables)
+        public static void LaunchAndInject(InjectorConfig config, Dictionary<String, String> environmentVariables)
         {
-            // We don't need debug mode for injection, because process will be our child
-            //Process.EnterDebugMode();
-
+            // We need debug mode for injection, because process is not our child
+            Process.EnterDebugMode();
+            
             PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
-
+            
             var currentVariables = Environment.GetEnvironmentVariables();
-            foreach (KeyValuePair<String, String> var in environmentVariables)
-                currentVariables[var.Key] = var.Value;
-
             string newVariablesString = CreateEnvironmentVariablesString(currentVariables);
+            
+            foreach (var variable in environmentVariables)
+            {
+                Environment.SetEnvironmentVariable(variable.Key, variable.Value, EnvironmentVariableTarget.User);
+            }
+            
+            CreateNewProcess(config.exePath, config.arguments, config.workingDir, ref pi, CREATE_NEW_CONSOLE | CREATE_UNICODE_ENVIRONMENT, newVariablesString);
 
-            CreateNewProcess(config.exePath, config.arguments, config.workingDir, ref pi, CREATE_SUSPENDED | CREATE_NEW_CONSOLE | CREATE_UNICODE_ENVIRONMENT, newVariablesString);
+            for (int injectAttempt = 0; injectAttempt < InjectionAttempts; injectAttempt++)
+            {
+                try
+                {
+                    Logger.WriteLine("Waiting for process");
 
-            InjectOverlayIntoProcess(pi.dwProcessId, config.steamDir);
+                    var pid = -1;
+                    while (pid == -1)
+                    {
+                        var process = Process.GetProcessesByName(config.processName);
+                        if (process.Length > 0)
+                        {
+                            pid = process.First().Id;
+                        }
+                        else
+                        {
+                            Thread.Sleep(10);
+                        }
+                    }
 
-            // Without waiting, playnite might skip a child process (it checks them every 500ms), causing playtime to be counted incorrectly
-            Thread.Sleep(config.resumingDelay);
-            if (ResumeThread(pi.hThread) == 4294967295)
-                throw new Exception($"[{pi.dwProcessId}] Thread resume failed: 0x{Marshal.GetLastWin32Error():X}");
+                    Logger.WriteLine($"Process found, pid = {pid}");
+                    
+                    InjectOverlayIntoProcess((uint)pid, config.steamDir);
 
-            Logger.WriteLine($"[{pi.dwProcessId}] Thread resumed");
+                    Logger.WriteLine("Overlay injected");
+                }
+                catch (Exception ex)
+                {
+                    Logger.WriteLine($"Exception while injecting: {ex}");
+                }
+            }
 
-            return pi.dwProcessId;
+            foreach (var variable in environmentVariables)
+            {
+                Environment.SetEnvironmentVariable(variable.Key, null, EnvironmentVariableTarget.User);
+            }
         }
 
         static string CreateEnvironmentVariablesString(IDictionary variables)
