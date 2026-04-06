@@ -4,13 +4,13 @@ using System.Collections;
 using static DllInjector.Win32Api;
 using static DllInjector.Win32Constants;
 using static DllInjector.DllInjection;
-using static DllInjector.Models;
 using Newtonsoft.Json;
 using System.Text;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
+using DllInjector.Models;
 
 namespace DllInjector
 {
@@ -103,13 +103,8 @@ namespace DllInjector
             var currentVariables = Environment.GetEnvironmentVariables();
             string newVariablesString = CreateEnvironmentVariablesString(currentVariables);
             
-            foreach (var variable in environmentVariables)
-            {
-                Environment.SetEnvironmentVariable(variable.Key, variable.Value, EnvironmentVariableTarget.User);
-            }
-            
             CreateNewProcess(config.exePath, config.arguments, config.workingDir, ref pi, CREATE_NEW_CONSOLE | CREATE_UNICODE_ENVIRONMENT, newVariablesString);
-
+            
             for (int injectAttempt = 0; injectAttempt < InjectionAttempts; injectAttempt++)
             {
                 try
@@ -132,19 +127,16 @@ namespace DllInjector
 
                     Logger.WriteLine($"Process found, pid = {pid}");
                     
-                    InjectOverlayIntoProcess((uint)pid, config.steamDir);
+                    InjectOverlayIntoProcess((uint)pid, config.steamDir, environmentVariables);
 
                     Logger.WriteLine("Overlay injected");
+
+                    break;
                 }
                 catch (Exception ex)
                 {
                     Logger.WriteLine($"Exception while injecting: {ex}");
                 }
-            }
-
-            foreach (var variable in environmentVariables)
-            {
-                Environment.SetEnvironmentVariable(variable.Key, null, EnvironmentVariableTarget.User);
             }
         }
 

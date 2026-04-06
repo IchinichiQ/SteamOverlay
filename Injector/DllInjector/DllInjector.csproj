@@ -67,7 +67,9 @@
   <ItemGroup>
     <Compile Include="DllInjection.cs" />
     <Compile Include="Logger.cs" />
-    <Compile Include="Models.cs" />
+    <Compile Include="Models\GameConfig.cs" />
+    <Compile Include="Models\InjectorConfig.cs" />
+    <Compile Include="Models\TargetAddresses.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Win32Api.cs" />
