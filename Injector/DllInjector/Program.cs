@@ -1,16 +1,15 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Collections;
-using static DllInjector.Win32Api;
-using static DllInjector.Win32Constants;
+using static DllInjector.WinApi.Win32Api;
+using static DllInjector.WinApi.Win32Constants;
 using static DllInjector.DllInjection;
 using Newtonsoft.Json;
-using System.Text;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
 using DllInjector.Models;
+using DllInjector.WinApi.Models;
 
 namespace DllInjector
 {
@@ -24,49 +23,34 @@ namespace DllInjector
             {
                 // TODO: Make logs auto clear by size limit
                 if (!args.Contains("-noClearLog"))
+                {
                     Logger.ClearLog();
+                }
 
-                // TODO: Add auto launch
+                // TODO: Auto launch
                 if (Process.GetProcessesByName("steam").Length == 0)
+                {
                     throw new Exception("Steam is not running!");
+                }
 
                 if (args[0].ToLower() != "-configpath" || args.Length < 2)
+                {
                     throw new ArgumentException("Invalid arguments!");
+                }
 
-                string configPath = args[1];
-
-                if (!File.Exists(configPath))
-                    throw new FileNotFoundException("Config file doesn't exists!");
-
-                string json = File.ReadAllText(configPath);
-                GameConfig gameConfig = JsonConvert.DeserializeObject<GameConfig>(json);
-                // TODO: Use common config for all games
-                InjectorConfig config = gameConfig.injectorConfig;
-
-                if (!File.Exists(config.exePath))
-                    throw new FileNotFoundException("Game executable file doesn't exists!");
-                if (!Directory.Exists(config.steamDir))
-                    throw new DirectoryNotFoundException("Steam directory doesn't exists!");
-                if (!File.Exists(Path.Combine(config.steamDir, "GameOverlayRenderer64.dll")))
-                    throw new FileNotFoundException("There is no GameOverlayRenderer64.dll file in the steam directory!");
-                if (!File.Exists(Path.Combine(config.steamDir, "GameOverlayRenderer.dll")))
-                    throw new FileNotFoundException("There is no GameOverlayRenderer.dll file in the steam directory!");
-                if (!Directory.Exists(config.workingDir))
-                    throw new DirectoryNotFoundException("Working directory doesn't exists!");
+                var configPath = args[1];
+                var config = ReadConfig(configPath);
                 
-                // TODO: Log config object instead of parameters
+                ValidateConfig(config);
+                
                 Logger.WriteLine($"Config path: {configPath}");
-                Logger.WriteLine($"Exe: {config.exePath}");
-                Logger.WriteLine($"Process name: {config.processName}");
-                Logger.WriteLine($"Steam directory: {config.steamDir}");
-                Logger.WriteLine($"Working directory: {config.workingDir}");
-                Logger.WriteLine($"Arguments: {config.arguments}");
-                Logger.WriteLine($"Game id: {config.gameId}");
-                Logger.WriteLine($"ENABLE_VK_LAYER_VALVE_steam_overlay_1: {config.ENABLE_VK_LAYER_VALVE_steam_overlay_1}\n");              
+                Logger.WriteLine($"Config:\n{config}");
 
-                Dictionary<string, string> variables = new Dictionary<string, string>();
-                variables.Add("SteamOverlayGameId", config.gameId);
-                variables.Add("ENABLE_VK_LAYER_VALVE_steam_overlay_1", config.ENABLE_VK_LAYER_VALVE_steam_overlay_1 ? "1" : "0");
+                var variables = new Dictionary<string, string>
+                {
+                    { "SteamOverlayGameId", config.gameId },
+                    { "ENABLE_VK_LAYER_VALVE_steam_overlay_1", config.ENABLE_VK_LAYER_VALVE_steam_overlay_1 ? "1" : "0" }
+                };
 
                 LaunchAndInject(config, variables);
             }
@@ -75,7 +59,7 @@ namespace DllInjector
                 if (ex.ToString().Contains("0x5") || ex.ToString().Contains("0x80004005"))
                 {
                     Logger.WriteLine("Restarting injector with admin rights...");
-                    RunInjectorWithAdminRights($"-configPath {args[1]} -noClearLog");
+                    RestartWithAdminRights($"-configPath {args[1]} -noClearLog");
                 }
                 else
                 {
@@ -93,40 +77,63 @@ namespace DllInjector
             Logger.WriteLine("Closing...");
         }
 
-        public static void LaunchAndInject(InjectorConfig config, Dictionary<String, String> environmentVariables)
+        private static InjectorConfig ReadConfig(string path)
+        {
+            if (!File.Exists(path))
+            {
+                throw new FileNotFoundException("Config file doesn't exists!");
+            }
+            
+            var json = File.ReadAllText(path);
+            var gameConfig = JsonConvert.DeserializeObject<GameConfig>(json);
+            
+            // TODO: Use common config fields for all games
+            return gameConfig.injectorConfig;
+        }
+        
+        private static void ValidateConfig(InjectorConfig config)
+        {
+            if (!File.Exists(config.exePath))
+            {
+                throw new FileNotFoundException("Game executable file doesn't exists!");
+            }
+
+            if (!Directory.Exists(config.steamDir))
+            {
+                throw new DirectoryNotFoundException("Steam directory doesn't exists!");
+            }
+
+            if (!File.Exists(Path.Combine(config.steamDir, "GameOverlayRenderer64.dll")))
+            {
+                throw new FileNotFoundException("There is no GameOverlayRenderer64.dll file in the steam directory!");
+            }
+
+            if (!File.Exists(Path.Combine(config.steamDir, "GameOverlayRenderer.dll")))
+            {
+                throw new FileNotFoundException("There is no GameOverlayRenderer.dll file in the steam directory!");
+            }
+
+            if (!Directory.Exists(config.workingDir))
+            {
+                throw new DirectoryNotFoundException("Working directory doesn't exists!");
+            }
+        }
+        
+        private static void LaunchAndInject(InjectorConfig config, Dictionary<String, String> environmentVariables)
         {
             // We need debug mode for injection, because process is not our child
             Process.EnterDebugMode();
             
-            PROCESS_INFORMATION pi = new PROCESS_INFORMATION();
+            var pi = new PROCESS_INFORMATION();
+            CreateNewProcess(config.exePath, config.arguments, config.workingDir, ref pi, CREATE_NEW_CONSOLE | CREATE_UNICODE_ENVIRONMENT);
             
-            var currentVariables = Environment.GetEnvironmentVariables();
-            string newVariablesString = CreateEnvironmentVariablesString(currentVariables);
-            
-            CreateNewProcess(config.exePath, config.arguments, config.workingDir, ref pi, CREATE_NEW_CONSOLE | CREATE_UNICODE_ENVIRONMENT, newVariablesString);
-            
-            for (int injectAttempt = 0; injectAttempt < InjectionAttempts; injectAttempt++)
+            // We need retries because some games quickly respawn the process,
+            // so the first one we catch might not be the right one
+            for (var injectAttempt = 0; injectAttempt < InjectionAttempts; injectAttempt++)
             {
                 try
                 {
-                    Logger.WriteLine("Waiting for process");
-
-                    var pid = -1;
-                    while (pid == -1)
-                    {
-                        var process = Process.GetProcessesByName(config.processName);
-                        if (process.Length > 0)
-                        {
-                            pid = process.First().Id;
-                        }
-                        else
-                        {
-                            Thread.Sleep(10);
-                        }
-                    }
-
-                    Logger.WriteLine($"Process found, pid = {pid}");
-                    
+                    var pid = WaitForProcess(config.processName);
                     InjectOverlayIntoProcess((uint)pid, config.steamDir, environmentVariables);
 
                     Logger.WriteLine("Overlay injected");
@@ -140,24 +147,33 @@ namespace DllInjector
             }
         }
 
-        static string CreateEnvironmentVariablesString(IDictionary variables)
+        // TODO: Maybe wait for any process in folder? To support launcher based games where we know only install dir
+        private static int WaitForProcess(string processName)
         {
-            StringBuilder sb = new StringBuilder();
-            foreach (DictionaryEntry var in variables)
+            Logger.WriteLine("Waiting for process");
+
+            var pid = -1;
+            while (pid == -1)
             {
-                sb.Append(var.Key);
-                sb.Append('=');
-                sb.Append(var.Value);
-                sb.Append(Char.MinValue);
+                var process = Process.GetProcessesByName(processName);
+                if (process.Length > 0)
+                {
+                    Logger.WriteLine($"Process found, pid = {pid}");
+                    
+                    pid = process.First().Id;
+                }
+                else
+                {
+                    Thread.Sleep(10);
+                }
             }
-            sb.Append(Char.MinValue);
-
-            return sb.ToString();
+            
+            return pid;
         }
-
-        static void RunInjectorWithAdminRights(string arguments)
+        
+        static void RestartWithAdminRights(string arguments)
         {
-            ProcessStartInfo startInfo = new ProcessStartInfo(Process.GetCurrentProcess().MainModule.FileName);
+            var startInfo = new ProcessStartInfo(Process.GetCurrentProcess().MainModule.FileName);
 
             startInfo.UseShellExecute = true;
             startInfo.Arguments = arguments;

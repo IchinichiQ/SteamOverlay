@@ -1,13 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace DllInjector
 {
+    // TODO: Improve logging
+    // - Add timestamps to each log
+    // - Break down by logging level
+    // - Remove mutexes (why are they here?)
     internal class Logger
     {
         private static string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "log.txt");

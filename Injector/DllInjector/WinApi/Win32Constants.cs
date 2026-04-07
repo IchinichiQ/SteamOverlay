@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace DllInjector
+namespace DllInjector.WinApi
 {
     internal class Win32Constants
     {
@@ -24,9 +20,10 @@ namespace DllInjector
         public const uint MEM_RESERVE = 0x00002000;
         public const uint LIST_MODULES_ALL = 0x03;
         public const uint MAX_PATH = 260;
-        public const uint MEM_FREE = 0x00010000;
+        public const uint MEM_RELEASE = 0x00008000;
         public const uint STARTF_USESHOWWINDOW = 0x00000001;
         public const uint SW_SHOW = 5;
         public const int ERROR_ELEVATION_REQUIRED = 0x2E4;
+        public static IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
     }
 }

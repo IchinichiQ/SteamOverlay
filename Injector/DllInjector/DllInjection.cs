@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
-using static DllInjector.Win32Api;
-using static DllInjector.Win32Constants;
 using System.Diagnostics;
 using System.IO;
 using DllInjector.Models;
+using DllInjector.WinApi;
+using DllInjector.WinApi.Models;
 
 namespace DllInjector
 {
@@ -16,100 +14,106 @@ namespace DllInjector
     {
         const uint INJ_TIMEOUT = 100000;
 
-        public static IntPtr CreateNewProcess(string exe_path, string cmdArg, string workingDirArg, ref PROCESS_INFORMATION pi, uint flags, string envVars)
+        // Will be soon deleted as injector now works on the fly
+        public static void CreateNewProcess(string exePath, string cmdArg, string workingDirArg, ref PROCESS_INFORMATION pi, uint flags)
         {
-            STARTUPINFOW si = new STARTUPINFOW();
+            var si = new STARTUPINFOW();
             si.cb = (uint)Marshal.SizeOf(si);
-            si.dwFlags = STARTF_USESHOWWINDOW;
-            si.wShowWindow = SW_SHOW;
+            si.dwFlags = Win32Constants.STARTF_USESHOWWINDOW;
+            si.wShowWindow = Win32Constants.SW_SHOW;
 
             string cmd = null;
             if (!string.IsNullOrEmpty(cmdArg))
-                cmd = exe_path + " " + cmdArg;
-
-            string workingDir = workingDirArg == String.Empty ? null : workingDirArg;
-
-            if (CreateProcessW(
-                exe_path,
-                cmd,
-                IntPtr.Zero, //lpProcessAttributes
-                IntPtr.Zero, //lpThreadAttributes
-                false, //bInheritHandles
-                flags, //dwCreationFlags
-                envVars, //lpEnvironment 
-                workingDir, //lpCurrentDirectory
-                ref si, //lpStartupInfo
-                out pi //lpProcessInformation
-            ))
             {
-                Logger.WriteLine($"[{pi.dwProcessId}] Process is successfully created");
-                return pi.hProcess;
+                cmd = exePath + " " + cmdArg;
             }
-            else
+
+            var workingDir = workingDirArg == String.Empty ? null : workingDirArg;
+            if (!Win32Api.CreateProcessW(
+                    exePath,
+                    cmd,
+                    lpProcessAttributes: IntPtr.Zero,
+                    lpThreadAttributes: IntPtr.Zero,
+                    bInheritHandles: false,
+                    dwCreationFlags: flags,
+                    lpEnvironment: null,
+                    lpCurrentDirectory: workingDir,
+                    lpStartupInfo: ref si,
+                    lpProcessInformation: out pi
+                ))
             {
-                int err = Marshal.GetLastWin32Error();
+                var err = Marshal.GetLastWin32Error();
                 throw new Exception($"Error while creating process: 0x{err:X}");
             }
+            
+            Logger.WriteLine($"[{pi.dwProcessId}] Process is successfully created");
         }
 
         public static void InjectOverlayIntoProcess(uint pid, string steamDir, Dictionary<string, string> envs)
         {
-            IntPtr hTargetProcess = OpenProcess(pid);
+            var hTargetProcess = OpenProcess(pid);
 
-            bool isTarget32Bit;
-            if (!IsWow64Process(hTargetProcess, out isTarget32Bit))
+            if (!Win32Api.IsWow64Process(hTargetProcess, out var isTarget32Bit))
+            {
                 throw new Exception($"[{pid}] IsWow64Process error: 0x{Marshal.GetLastWin32Error():X}");
+            }
 
-            String dllPath;
-            if (isTarget32Bit)
-                dllPath = Path.Combine(steamDir, "GameOverlayRenderer.dll");
-            else
-                dllPath = Path.Combine(steamDir, "GameOverlayRenderer64.dll");
+            var dllPath = isTarget32Bit
+                ? Path.Combine(steamDir, "GameOverlayRenderer.dll")
+                : Path.Combine(steamDir, "GameOverlayRenderer64.dll");
 
             var targetAddresses = GetTargetAddresses(isTarget32Bit);
 
             InjectEnvVariables(isTarget32Bit, hTargetProcess, targetAddresses.SetEnvironmentVariableW, envs);
             
             var unicode = new UnicodeEncoding();
-            byte[] dllPathBytes = unicode.GetBytes(dllPath + char.MinValue);
+            var dllPathBytes = unicode.GetBytes(dllPath + char.MinValue);
 
-            // write the full path of the DLL into the target process
-            IntPtr remotePtrToDllPath = WriteIntoProcess(hTargetProcess, dllPathBytes, (uint)dllPathBytes.Length, PAGE_READWRITE);
+            // Write the full path of the DLL into the target process
+            var remotePtrToDllPath = WriteIntoProcess(hTargetProcess, dllPathBytes, (uint)dllPathBytes.Length, Win32Constants.PAGE_READWRITE);
             Logger.WriteLine($"[{pid}] Dll path writen to: 0x{remotePtrToDllPath:X}");
 
             // Inject to the target process
-            IntPtr hRemoteLoadLib = CreateRemoteThread(hTargetProcess, IntPtr.Zero, 0, targetAddresses.LoadLibraryW, remotePtrToDllPath, 0, IntPtr.Zero);
+            var hRemoteLoadLib = Win32Api.CreateRemoteThread(hTargetProcess, IntPtr.Zero, 0, targetAddresses.LoadLibraryW, remotePtrToDllPath, 0, IntPtr.Zero);
             if (hRemoteLoadLib == IntPtr.Zero)
+            {
                 throw new Exception($"[{pid}] Creating thread failed: 0x{Marshal.GetLastWin32Error():X}");
+            }
 
             int? err = null;
-            uint ret = WaitForSingleObject(hRemoteLoadLib, INJ_TIMEOUT);
-            if (ret != WAIT_OBJECT_0)
+            var waitResult = Win32Api.WaitForSingleObject(hRemoteLoadLib, INJ_TIMEOUT);
+            if (waitResult != Win32Constants.WAIT_OBJECT_0)
+            {
                 err = Marshal.GetLastWin32Error();
+            }
 
-            CloseHandle(hRemoteLoadLib);
             // cleanup
-            VirtualFreeEx(hTargetProcess, remotePtrToDllPath, 0, MEM_FREE);
+            Win32Api.CloseHandle(hRemoteLoadLib);
+            Win32Api.VirtualFreeEx(hTargetProcess, remotePtrToDllPath, 0, Win32Constants.MEM_RELEASE);
 
             if (err != null)
+            {
                 throw new Exception($"[{pid}] WaitForSingleObject error: 0x{err:X}");
+            }
 
-            bool isModuleInProcess = SearchModuleByPath(hTargetProcess, dllPath) != IntPtr.Zero;
-            CloseHandle(hTargetProcess);
+            var isModuleInProcess = SearchModuleByPath(hTargetProcess, dllPath) != IntPtr.Zero;
+            Win32Api.CloseHandle(hTargetProcess);
 
             if (!isModuleInProcess)
+            {
                 throw new Exception($"[{pid}] Injection failed! Module is not in the process");
+            }
 
             Logger.WriteLine($"[{pid}] Successfully injected");
         }
 
-        public static void InjectEnvVariables(
+        private static void InjectEnvVariables(
             bool isTarget32Bit,
             IntPtr hTargetProcess,
             IntPtr setEnvAddress,
             Dictionary<string, string> envs)
         {
-            byte[] shellcode = isTarget32Bit
+            var shellcode = isTarget32Bit
                 ? new byte[]
                 {
                     // x86 stdcall: arguments are passed via stack
@@ -134,16 +138,16 @@ namespace DllInjector
 
             foreach (var env in envs)
             {
-                byte[] nameBytes = Encoding.Unicode.GetBytes(env.Key + "\0");
-                byte[] valueBytes = Encoding.Unicode.GetBytes(env.Value + "\0");
+                var nameBytes = Encoding.Unicode.GetBytes(env.Key + "\0");
+                var valueBytes = Encoding.Unicode.GetBytes(env.Value + "\0");
 
                 // Allocate memory and write strings into the target process
-                IntPtr pRemoteName = WriteIntoProcess(hTargetProcess, nameBytes, (uint)nameBytes.Length, PAGE_READWRITE);
-                IntPtr pRemoteValue = WriteIntoProcess(hTargetProcess, valueBytes, (uint)valueBytes.Length, PAGE_READWRITE);
+                var pRemoteName = WriteIntoProcess(hTargetProcess, nameBytes, (uint)nameBytes.Length, Win32Constants.PAGE_READWRITE);
+                var pRemoteValue = WriteIntoProcess(hTargetProcess, valueBytes, (uint)valueBytes.Length, Win32Constants.PAGE_READWRITE);
 
                 // Form the ThreadData structure: [Function Address] [Name Address] [Value Address]
-                int ptrSize = isTarget32Bit ? 4 : 8;
-                byte[] dataBytes = new byte[ptrSize * 3];
+                var ptrSize = isTarget32Bit ? 4 : 8;
+                var dataBytes = new byte[ptrSize * 3];
 
                 if (isTarget32Bit)
                 {
@@ -159,57 +163,53 @@ namespace DllInjector
                 }
 
                 // Allocate memory and write the structure and shellcode
-                IntPtr pRemoteData = WriteIntoProcess(hTargetProcess, dataBytes, (uint)dataBytes.Length, PAGE_READWRITE);
+                var pRemoteData = WriteIntoProcess(hTargetProcess, dataBytes, (uint)dataBytes.Length, Win32Constants.PAGE_READWRITE);
                 
                 //  Execution rights required for shellcode (PAGE_EXECUTE_READWRITE = 0x40)
-                IntPtr pRemoteShellcode = WriteIntoProcess(hTargetProcess, shellcode, (uint)shellcode.Length, 0x40); 
+                var pRemoteShellcode = WriteIntoProcess(hTargetProcess, shellcode, (uint)shellcode.Length, 0x40); 
 
                 // Execute the shellcode
-                IntPtr hEnvThread = CreateRemoteThread(hTargetProcess, IntPtr.Zero, 0, pRemoteShellcode, pRemoteData, 0, IntPtr.Zero);
+                var hEnvThread = Win32Api.CreateRemoteThread(hTargetProcess, IntPtr.Zero, 0, pRemoteShellcode, pRemoteData, 0, IntPtr.Zero);
                 if (hEnvThread == IntPtr.Zero)
                     throw new Exception($"CreateRemoteThread for env vars failed: 0x{Marshal.GetLastWin32Error():X}");
 
-                WaitForSingleObject(hEnvThread, INJ_TIMEOUT);
-                CloseHandle(hEnvThread);
+                Win32Api.WaitForSingleObject(hEnvThread, INJ_TIMEOUT);
+                Win32Api.CloseHandle(hEnvThread);
 
-                // Clean up allocated memory (0x8000 = MEM_RELEASE)
-                VirtualFreeEx(hTargetProcess, pRemoteName, 0, 0x8000);
-                VirtualFreeEx(hTargetProcess, pRemoteValue, 0, 0x8000);
-                VirtualFreeEx(hTargetProcess, pRemoteData, 0, 0x8000);
-                VirtualFreeEx(hTargetProcess, pRemoteShellcode, 0, 0x8000);
+                // Clean up allocated memory
+                Win32Api.VirtualFreeEx(hTargetProcess, pRemoteName, 0, Win32Constants.MEM_RELEASE);
+                Win32Api.VirtualFreeEx(hTargetProcess, pRemoteValue, 0, Win32Constants.MEM_RELEASE);
+                Win32Api.VirtualFreeEx(hTargetProcess, pRemoteData, 0, Win32Constants.MEM_RELEASE);
+                Win32Api.VirtualFreeEx(hTargetProcess, pRemoteShellcode, 0, Win32Constants.MEM_RELEASE);
             }
             
             // TODO: Write process environment variables to log for debug
         }
         
-        public static IntPtr OpenProcess(uint pid)
+        private static IntPtr OpenProcess(uint pid)
         {
-            IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
-
-            IntPtr hProcess = Win32Api.OpenProcess(
-                PROCESS_CREATE_THREAD | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION | PROCESS_QUERY_INFORMATION,
+            var hProcess = Win32Api.OpenProcess(
+                Win32Constants.PROCESS_CREATE_THREAD | Win32Constants.PROCESS_VM_READ | Win32Constants.PROCESS_VM_WRITE
+                | Win32Constants.PROCESS_VM_OPERATION | Win32Constants.PROCESS_QUERY_INFORMATION,
                 false,
                 pid
             );
-
-            if (hProcess == IntPtr.Zero || hProcess == INVALID_HANDLE_VALUE)
+            
+            if (hProcess == IntPtr.Zero || hProcess == Win32Constants.INVALID_HANDLE_VALUE)
             {
-                int err = Marshal.GetLastWin32Error();
-                if (err == ERROR_INVALID_PARAMETER)
-                    throw new Exception($"[{pid}] Opening the process failed. Is the process still running?");
-                else
-                    throw new Exception($"[{pid}] Opening the process failed: 0x{err:X}");
+                var err = Marshal.GetLastWin32Error();
+                throw new Exception($"[{pid}] Opening the process failed: 0x{err:X}");
             }
 
             return hProcess;
         }
 
-        public static TargetAddresses GetTargetAddresses(bool is32Bit)
+        private static TargetAddresses GetTargetAddresses(bool is32Bit)
         {
             if (is32Bit)
             {
-                string helperPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "x32Helper.exe");
-                ProcessStartInfo psi = new ProcessStartInfo
+                var helperPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "x32Helper.exe");
+                var psi = new ProcessStartInfo
                 {
                     FileName = helperPath,
                     UseShellExecute = false,
@@ -217,15 +217,15 @@ namespace DllInjector
                     CreateNoWindow = true
                 };
 
-                using (Process proc = Process.Start(psi))
+                using (var proc = Process.Start(psi))
                 {
-                    string output = proc.StandardOutput.ReadToEnd();
+                    var output = proc.StandardOutput.ReadToEnd();
                     proc.WaitForExit();
 
                     if (proc.ExitCode != 0 || string.IsNullOrWhiteSpace(output))
                         throw new Exception($"x32Helper failed with exit code {proc.ExitCode}");
 
-                    string[] parts = output.Trim().Split(';');
+                    var parts = output.Trim().Split(';');
                     if (parts.Length < 2)
                         throw new Exception("x32Helper returned invalid data format.");
 
@@ -237,13 +237,14 @@ namespace DllInjector
                 }
             }
 
-            IntPtr hKernel32 = GetModuleHandle("kernel32.dll");
-            IntPtr pLoadLib = GetProcAddress(hKernel32, "LoadLibraryW");
-            IntPtr pSetEnv = GetProcAddress(hKernel32, "SetEnvironmentVariableW");
+            var hKernel32 = Win32Api.GetModuleHandle("kernel32.dll");
+            var pLoadLib = Win32Api.GetProcAddress(hKernel32, "LoadLibraryW");
+            var pSetEnv = Win32Api.GetProcAddress(hKernel32, "SetEnvironmentVariableW");
 
             if (pLoadLib == IntPtr.Zero || pSetEnv == IntPtr.Zero)
+            {
                 throw new Exception("Failed to resolve addresses in 64-bit kernel32.dll");
-
+            }
             return new TargetAddresses
             {
                 LoadLibraryW = pLoadLib,
@@ -253,55 +254,60 @@ namespace DllInjector
 
         static IntPtr WriteIntoProcess(IntPtr hProcess, byte[] bytesToWrite, uint bytesSize, uint protect)
         {
-            IntPtr remoteAddress = VirtualAllocEx(hProcess, IntPtr.Zero, bytesSize + 1, MEM_COMMIT | MEM_RESERVE, protect);
+            var remoteAddress = Win32Api.VirtualAllocEx(hProcess, IntPtr.Zero, bytesSize + 1, Win32Constants.MEM_COMMIT | Win32Constants.MEM_RESERVE, protect);
             if (remoteAddress == IntPtr.Zero)
             {
-                int err = Marshal.GetLastWin32Error();
-                VirtualFreeEx(hProcess, remoteAddress, bytesSize, MEM_FREE);
+                Win32Api.VirtualFreeEx(hProcess, remoteAddress, bytesSize, Win32Constants.MEM_RELEASE);
+            
+                var err = Marshal.GetLastWin32Error();
                 throw new Exception($"VirtualAllocEx error: 0x{err:X}");
             }
 
-            IntPtr dummy = new IntPtr();
-            if (!WriteProcessMemory(hProcess, remoteAddress, bytesToWrite, bytesSize, out dummy))
+            var dummy = new IntPtr();
+            if (!Win32Api.WriteProcessMemory(hProcess, remoteAddress, bytesToWrite, bytesSize, out dummy))
             {
-                int err = Marshal.GetLastWin32Error();
-                VirtualFreeEx(hProcess, remoteAddress, bytesSize, MEM_FREE);
+                Win32Api.VirtualFreeEx(hProcess, remoteAddress, bytesSize, Win32Constants.MEM_RELEASE);
+            
+                var err = Marshal.GetLastWin32Error();
                 throw new Exception($"WriteProcessMemory error: 0x{err:X}");
             }
-
+            
             return remoteAddress;
         }
 
-        public static IntPtr SearchModuleByPath(IntPtr hProcess, string searchedName)
+        private static IntPtr SearchModuleByPath(IntPtr hProcess, string searchedName)
         {
-            IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
             const uint hModsMax = 0x1000;
-            IntPtr[] hMods = new IntPtr[hModsMax];
+            var hMods = new IntPtr[hModsMax];
 
-            uint modules_count = EnumModules(hProcess, hMods, hModsMax, LIST_MODULES_ALL);
+            var modulesCount = EnumModules(hProcess, hMods, hModsMax, Win32Constants.LIST_MODULES_ALL);
 
-            Logger.WriteLine($"[{GetProcessId(hProcess)}] Module list ({modules_count}):");
+            Logger.WriteLine($"[{Win32Api.GetProcessId(hProcess)}] Module list ({modulesCount}):");
 
-            IntPtr hNeededModule = IntPtr.Zero;
-            for (int i = 0; i < modules_count; i++)
+            var hNeededModule = IntPtr.Zero;
+            for (var i = 0; i < modulesCount; i++)
             {
-                IntPtr hMod = hMods[i];
-                if (hMod == IntPtr.Zero || hMod == INVALID_HANDLE_VALUE) break;
-
-                StringBuilder sb = new StringBuilder((int)MAX_PATH);
-                if (GetModuleFileNameExW(hProcess, hMod, sb, MAX_PATH) != 0)
+                var hMod = hMods[i];
+                if (hMod == IntPtr.Zero || hMod == Win32Constants.INVALID_HANDLE_VALUE)
                 {
-                    string modulePath = sb.ToString();
+                    break;
+                }
 
-                    if (modulePath.ToLower() == searchedName.ToLower())
-                    {
-                        Logger.WriteLine($"{i + 1}. [*] {modulePath}");
-                        hNeededModule = hMod;
-                    }
-                    else
-                    {
-                        Logger.WriteLine($"{i + 1}. {modulePath}");
-                    }
+                var sb = new StringBuilder((int)Win32Constants.MAX_PATH);
+                if (Win32Api.GetModuleFileNameExW(hProcess, hMod, sb, Win32Constants.MAX_PATH) == 0)
+                {
+                    continue;
+                }
+                
+                var modulePath = sb.ToString();
+                if (string.Equals(modulePath, searchedName, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    Logger.WriteLine($"{i + 1}. [*] {modulePath}");
+                    hNeededModule = hMod;
+                }
+                else
+                {
+                    Logger.WriteLine($"{i + 1}. {modulePath}");
                 }
             }
 
@@ -311,12 +317,14 @@ namespace DllInjector
         static uint EnumModules(IntPtr hProcess, IntPtr[] hMods, uint hModsMax, uint filters)
         {
             uint cbNeeded;
-            if (!EnumProcessModulesEx(hProcess, hMods, hModsMax, out cbNeeded, filters))
+            if (!Win32Api.EnumProcessModulesEx(hProcess, hMods, hModsMax, out cbNeeded, filters))
+            {
                 throw new Exception($"[Handler {hProcess}] EnumProcessModulesEx failed: 0x{Marshal.GetLastWin32Error():X}");
+            }
 
-            uint modules_count = cbNeeded / (uint)Marshal.SizeOf(typeof(IntPtr));
+            var modulesCount = cbNeeded / (uint)Marshal.SizeOf(typeof(IntPtr));
 
-            return modules_count;
+            return modulesCount;
         }
     }
 }
