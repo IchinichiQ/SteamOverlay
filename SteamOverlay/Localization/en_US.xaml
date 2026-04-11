@@ -8,8 +8,8 @@
 	<sys:String x:Key="LOCSteamOverlay_SettingsSaveButtonText">Save</sys:String>
 	<sys:String x:Key="LOCSteamOverlay_SettingsCancelButtonText">Cancel</sys:String>
 	
-    <sys:String x:Key="LOCSteamOverlay_GameSettingsLaunchSettingsTitle">Launch settings</sys:String>
-    <sys:String x:Key="LOCSteamOverlay_GameSettingsExePathLabel">Executable path:</sys:String>
+    <sys:String x:Key="LOCSteamOverlay_GameSettingsInjectorSettingsTitle">Overlay injector settings</sys:String>
+    <sys:String x:Key="LOCSteamOverlay_GameSettingsProcessNameLabel">Process name:</sys:String>
 	<sys:String x:Key="LOCSteamOverlay_GameSettingsWorkDirLabel">Working directory:</sys:String>
 	<sys:String x:Key="LOCSteamOverlay_GameSettingsArgumentsLabel">Arguments:</sys:String>
 	<sys:String x:Key="LOCSteamOverlay_GameSettingsResumingDelayLabel">Game process resuming delay (ms):</sys:String>

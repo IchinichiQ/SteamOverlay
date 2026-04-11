@@ -22,25 +22,17 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <StackPanel Margin="10" Grid.Row="0">
-            <Label Content="{DynamicResource LOCSteamOverlay_GameSettingsLaunchSettingsTitle}" Margin="0,0,0,5"/>
+            <Label Content="{DynamicResource LOCSteamOverlay_GameSettingsInjectorSettingsTitle}" Margin="0,0,0,5"/>
             <Separator Margin="0,0,0,5"/>
             <DockPanel Margin="0,0,0,0">
-                <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsExePathLabel}" Style="{StaticResource LabelTextbox}"/>
+                <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsProcessNameLabel}" Style="{StaticResource LabelTextbox}"/>
                 <Button Margin="10,0,0,0" Content="{DynamicResource LOCSteamOverlay_SettingsBrowseButtonText}" DockPanel.Dock="Right" Click="ButtonBrowseExeFile_Click"/>
-                <TextBox Margin="10,0,0,0" Text="{Binding configData.exePath}"/>
+                <TextBox Margin="10,0,0,0" Text="{Binding configData.processName}"/>
             </DockPanel>
             <DockPanel Margin="0,10,0,0">
                 <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsWorkDirLabel}" Style="{StaticResource LabelTextbox}"/>
                 <Button Margin="10,0,0,0" Content="{DynamicResource LOCSteamOverlay_SettingsBrowseButtonText}" DockPanel.Dock="Right" Click="ButtonBrowseWorkingDir_Click"/>
                 <TextBox Margin="10,0,0,0" Text="{Binding configData.workingDir}"/>
-            </DockPanel>
-            <DockPanel Margin="0,10,0,0">
-                <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsArgumentsLabel}" Style="{StaticResource LabelTextbox}"/>
-                <TextBox Margin="10,0,0,0" Text="{Binding configData.arguments}"/>
-            </DockPanel>
-            <DockPanel Margin="0,10,0,0">
-                <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsResumingDelayLabel}" Style="{StaticResource LabelTextbox}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsResumingDelayToolTip}"/>
-                <TextBox Margin="10,0,0,0" Text="{Binding configData.resumingDelay}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsResumingDelayToolTip}"/>
             </DockPanel>
 
             <Label Content="{DynamicResource LOCSteamOverlay_GameSettingsSteamOverlaySettingsTitle}" Margin="0,20,0,5"/>

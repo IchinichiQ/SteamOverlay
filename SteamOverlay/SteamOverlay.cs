@@ -4,12 +4,10 @@ using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using static SteamOverlay.ConfigUtils;
@@ -19,6 +17,7 @@ namespace SteamOverlay
     public class SteamOverlay : GenericPlugin
     {
         private static readonly ILogger logger = LogManager.GetLogger();
+        private readonly ConfigUtils _configUtils;
 
         private SteamOverlaySettingsViewModel settings { get; set; }
 
@@ -52,6 +51,8 @@ namespace SteamOverlay
                     settings.Settings.DefaultSteamDir = steamDir;
                 }
             }
+
+            _configUtils = new ConfigUtils(this);
         }
 
         public override IEnumerable<GameMenuItem> GetGameMenuItems(GetGameMenuItemsArgs args)
@@ -59,41 +60,30 @@ namespace SteamOverlay
             // TODO: Add support for selecting multiple games for an operation
             Game selectedGame = args.Games.First();
             var menuSection = ResourceProvider.GetString("LOCSteamOverlay_MenuSectionName");
-            bool hasOverlayAction = GameHasOverlayAction(selectedGame);
+            bool isOverlayEnabled = _configUtils.IsGameConfigExists(selectedGame);
 
             return new List<GameMenuItem>
             {
                 new GameMenuItem
                 {
-                    Description = hasOverlayAction ? ResourceProvider.GetString("LOCSteamOverlay_MenuItemDisableSteamOverlay") : ResourceProvider.GetString("LOCSteamOverlay_MenuItemEnableSteamOverlay"),
+                    Description = isOverlayEnabled ? ResourceProvider.GetString("LOCSteamOverlay_MenuItemDisableSteamOverlay") : ResourceProvider.GetString("LOCSteamOverlay_MenuItemEnableSteamOverlay"),
                     MenuSection = menuSection,
                     Action = (a) =>
                     {
-
-                        if (settings.Settings.IsFirstTimeEnablingOverlay)
-                        {
-                            MessageBoxResult res = PlayniteApi.Dialogs.ShowMessage(ResourceProvider.GetString("LOCSteamOverlay_MessageBoxTextFirstTimeUse"), ResourceProvider.GetString("LOCSteamOverlay_MessageBoxTitleFirstTimeUse"), MessageBoxButton.YesNo);
-                            if (res == MessageBoxResult.No)
-                                return;
-
-                            settings.Settings.IsFirstTimeEnablingOverlay = false;
-                            settings.EndEdit();
-                        }
-
-                        if (hasOverlayAction)
+                        if (isOverlayEnabled)
                             RemoveOverlayFromGame(selectedGame);
                         else
                             AddOverlayToGame(selectedGame);
                     }
                 },
+                // TODO: Hide if config not exist for game
                 new GameMenuItem
                 {
                     Description = ResourceProvider.GetString("LOCSteamOverlay_MenuItemConfigureSteamOverlay"),
                     MenuSection = menuSection,
                     Action = (a) =>
                     {
-                        ConfigUtils configUtils = new ConfigUtils(this);
-                        if (!configUtils.IsGameConfigExists(selectedGame))
+                        if (!_configUtils.IsGameConfigExists(selectedGame))
                         {
                             PlayniteApi.Dialogs.ShowErrorMessage(ResourceProvider.GetString("LOCSteamOverlay_MessageBoxErrorTextFirstLaunchNeeded"), ResourceProvider.GetString("LOCSteamOverlay_MessageBoxErrorTitle"));
                             return;
@@ -123,107 +113,41 @@ namespace SteamOverlay
 
         private void AddOverlayToGame(Game game)
         {
-            GameAction[] playActions = game.GameActions?.Where(action => action.IsPlayAction).ToArray();
-            if (playActions == null || playActions.Length == 0)
-            {
-                PlayniteApi.Dialogs.ShowErrorMessage(ResourceProvider.GetString("LOCSteamOverlay_MessageBoxErrorTextNoPlayAction"), ResourceProvider.GetString("LOCSteamOverlay_MessageBoxErrorTitle"));
-                return;
-            }
-            if (playActions.Length > 1)
-            {
-                // TODO: Add support for several play actions
-                PlayniteApi.Dialogs.ShowErrorMessage(ResourceProvider.GetString("LOCSteamOverlay_MessageBoxErrorTextSeveralPlayActions"), ResourceProvider.GetString("LOCSteamOverlay_MessageBoxErrorTitle"));
-                return;
-            }
-            if (playActions[0].Type != GameActionType.File)
-            {
-                // TODO: Add support for other action types
-                PlayniteApi.Dialogs.ShowErrorMessage(ResourceProvider.GetString("LOCSteamOverlay_MessageBoxErrorTextNotFileType"), ResourceProvider.GetString("LOCSteamOverlay_MessageBoxErrorTitle"));
-                return;
-            }
-            GameAction playAction = playActions[0];
-
-            string pathToGameExecutable = GetActionFileAbsolutePath(game, playAction);
-
             InjectorConfig injectorConfig;
-
-            ConfigUtils configUtils = new ConfigUtils(this);
-            if (configUtils.IsGameConfigExists(game))
+            
+            if (_configUtils.IsGameConfigExists(game))
             {
-                injectorConfig = configUtils.LoadGameConfig(game).injectorConfig;
+                injectorConfig = _configUtils.LoadGameConfig(game).injectorConfig;
             }
             else
             {
+                string processName = null;
+                
+                var playAction = game.GameActions?.Where(action => action.IsPlayAction).FirstOrDefault();
+                if (playAction?.Type == GameActionType.File)
+                {
+                    processName = Path.GetFileNameWithoutExtension(playAction.Path);
+                }
+                
                 injectorConfig = new InjectorConfig();
                 injectorConfig.steamDir = settings.Settings.DefaultSteamDir;
-                injectorConfig.exePath = pathToGameExecutable;
+                injectorConfig.processName = processName;
                 // TODO: Playnite working directory interpritation
-                injectorConfig.workingDir = Path.GetDirectoryName(pathToGameExecutable);
-                injectorConfig.arguments = playAction.Arguments;
+                injectorConfig.workingDir = game.InstallDirectory;
                 injectorConfig.gameId = settings.Settings.DefaultGameId;
-                injectorConfig.resumingDelay = settings.Settings.DefaultResumingDelay;
                 injectorConfig.ENABLE_VK_LAYER_VALVE_steam_overlay_1 = settings.Settings.DefaultENABLE_VK_LAYER_VALVE_steam_overlay_1;
             }
 
             GameConfig gameConfig = new GameConfig();
-            gameConfig.originalPlayAction = playAction;
             gameConfig.injectorConfig = injectorConfig;
 
-            configUtils.SaveGameConfig(game, gameConfig);
-
-            GameAction actionOverlay = new GameAction();
-            actionOverlay.IsPlayAction = true;
-            actionOverlay.Name = "SteamOverlay";
-            actionOverlay.Type = GameActionType.File;
-            actionOverlay.Path = InjectorPath;
-            actionOverlay.Arguments = $"-configPath \"{configUtils.GetGameConfigPath(game)}\"";
-            // Working dir is not needed because injector will use working dir from config
-            //actionOverlay.WorkingDir = playAction.WorkingDir;
-            actionOverlay.TrackingPath = playAction.TrackingPath;
-            actionOverlay.TrackingMode = playAction.TrackingMode;
-
-            game.GameActions.Remove(playAction);
-            game.GameActions.Add(actionOverlay);
-            PlayniteApi.Database.Games.Update(game);
+            _configUtils.SaveGameConfig(game, gameConfig);
         }
 
         private void RemoveOverlayFromGame(Game game)
         {
-            // TODO: Handle situation when game config file is not exist
             ConfigUtils config = new ConfigUtils(this);
             GameConfig gameConfig = config.LoadGameConfig(game);
-
-            GameAction overlayAction = game.GameActions.First(action => action.Name == "SteamOverlay");
-
-            game.GameActions.Remove(overlayAction);
-            game.GameActions.Add(gameConfig.originalPlayAction);
-            PlayniteApi.Database.Games.Update(game);
-        }
-
-        private bool GameHasOverlayAction(Game game)
-        {
-            return game.GameActions?.Any(action => action.Name == "SteamOverlay") ?? false;
-        }
-
-        private string GetActionFileAbsolutePath(Game game, GameAction action)
-        {
-            // TODO: Playnite variables interpritation
-            if (File.Exists(action.Path))
-            {
-                return action.Path;
-            }
-            else
-            {
-                string absolutePath = Path.Combine(game.InstallDirectory, action.Path);
-                if (File.Exists(absolutePath))
-                {
-                    return absolutePath;
-                }
-                else
-                {
-                    throw new FileNotFoundException(ResourceProvider.GetString("LOCSteamOverlay_ErrorPlayActionFileNotFound"));
-                }
-            }
         }
 
         private string GetSteamDir()
@@ -240,39 +164,25 @@ namespace SteamOverlay
             return null;
         }
 
-        public override void OnGameInstalled(OnGameInstalledEventArgs args)
+        public override void OnGameStarting(OnGameStartingEventArgs args)
         {
-            // Add code to be executed when game is finished installing.
-        }
+            if (!_configUtils.IsGameConfigExists(args.Game))
+            {
+                return;
+            }
+            
+            var process = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = InjectorPath,
+                    Arguments = $"-configPath \"{_configUtils.GetGameConfigPath(args.Game)}\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
 
-        public override void OnGameStarted(OnGameStartedEventArgs args)
-        {
-            // Add code to be executed when game is started running.
-        }
-
-        public override void OnGameStopped(OnGameStoppedEventArgs args)
-        {
-            // Add code to be executed when game is preparing to be started.
-        }
-
-        public override void OnGameUninstalled(OnGameUninstalledEventArgs args)
-        {
-            // Add code to be executed when game is uninstalled.
-        }
-
-        public override void OnApplicationStarted(OnApplicationStartedEventArgs args)
-        {
-            // Add code to be executed when Playnite is initialized.
-        }
-
-        public override void OnApplicationStopped(OnApplicationStoppedEventArgs args)
-        {
-            // Add code to be executed when Playnite is shutting down.
-        }
-
-        public override void OnLibraryUpdated(OnLibraryUpdatedEventArgs args)
-        {
-            // Add code to be executed when library is updated.
+            process.Start();
         }
 
         public override ISettings GetSettings(bool firstRunSettings)

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using static DllInjector.WinApi.Win32Api;
-using static DllInjector.WinApi.Win32Constants;
 using static DllInjector.DllInjection;
 using Newtonsoft.Json;
 using System.IO;
@@ -9,7 +8,6 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Threading;
 using DllInjector.Models;
-using DllInjector.WinApi.Models;
 
 namespace DllInjector
 {
@@ -93,11 +91,6 @@ namespace DllInjector
         
         private static void ValidateConfig(InjectorConfig config)
         {
-            if (!File.Exists(config.exePath))
-            {
-                throw new FileNotFoundException("Game executable file doesn't exists!");
-            }
-
             if (!Directory.Exists(config.steamDir))
             {
                 throw new DirectoryNotFoundException("Steam directory doesn't exists!");
@@ -123,9 +116,6 @@ namespace DllInjector
         {
             // We need debug mode for injection, because process is not our child
             Process.EnterDebugMode();
-            
-            var pi = new PROCESS_INFORMATION();
-            CreateNewProcess(config.exePath, config.arguments, config.workingDir, ref pi, CREATE_NEW_CONSOLE | CREATE_UNICODE_ENVIRONMENT);
             
             // We need retries because some games quickly respawn the process,
             // so the first one we catch might not be the right one

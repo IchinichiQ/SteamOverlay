@@ -51,12 +51,12 @@ namespace SteamOverlay
                 NotifyPropertyChanged();
             }
         }
-        public string exePath
+        public string processName
         {
-            get { return this.gameConfig.injectorConfig.exePath; }
+            get { return this.gameConfig.injectorConfig.processName; }
             set
             {
-                this.gameConfig.injectorConfig.exePath = value;
+                this.gameConfig.injectorConfig.processName = value;
                 NotifyPropertyChanged();
             }
         }
@@ -69,30 +69,12 @@ namespace SteamOverlay
                 NotifyPropertyChanged();
             }
         }
-        public string arguments
-        {
-            get { return this.gameConfig.injectorConfig.arguments; }
-            set
-            {
-                this.gameConfig.injectorConfig.arguments = value;
-                NotifyPropertyChanged();
-            }
-        }
         public int gameId
         {
             get { return this.gameConfig.injectorConfig.gameId; }
             set
             {
                 this.gameConfig.injectorConfig.gameId = value;
-                NotifyPropertyChanged();
-            }
-        }
-        public int resumingDelay
-        {
-            get { return this.gameConfig.injectorConfig.resumingDelay; }
-            set
-            {
-                this.gameConfig.injectorConfig.resumingDelay = value;
                 NotifyPropertyChanged();
             }
         }
@@ -135,9 +117,10 @@ namespace SteamOverlay
 
         private void ButtonBrowseExeFile_Click(object sender, RoutedEventArgs e)
         {
-            string exePath = plugin.PlayniteApi.Dialogs.SelectFile(ResourceProvider.GetString("LOCSteamOverlay_DialogSelectFileGameExe") + "|*.*");
-            if (exePath != String.Empty)
-                configData.exePath = exePath;
+            string path = plugin.PlayniteApi.Dialogs.SelectFile(ResourceProvider.GetString("LOCSteamOverlay_DialogSelectFileGameExe") + "|*.*");
+            var filename = System.IO.Path.GetFileNameWithoutExtension(path);
+            if (filename != String.Empty)
+                configData.processName = filename;
         }
 
         private void ButtonBrowseWorkingDir_Click(object sender, RoutedEventArgs e)

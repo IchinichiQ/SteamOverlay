@@ -6,48 +6,12 @@ using System.Diagnostics;
 using System.IO;
 using DllInjector.Models;
 using DllInjector.WinApi;
-using DllInjector.WinApi.Models;
 
 namespace DllInjector
 {
     public class DllInjection
     {
         const uint INJ_TIMEOUT = 100000;
-
-        // Will be soon deleted as injector now works on the fly
-        public static void CreateNewProcess(string exePath, string cmdArg, string workingDirArg, ref PROCESS_INFORMATION pi, uint flags)
-        {
-            var si = new STARTUPINFOW();
-            si.cb = (uint)Marshal.SizeOf(si);
-            si.dwFlags = Win32Constants.STARTF_USESHOWWINDOW;
-            si.wShowWindow = Win32Constants.SW_SHOW;
-
-            string cmd = null;
-            if (!string.IsNullOrEmpty(cmdArg))
-            {
-                cmd = exePath + " " + cmdArg;
-            }
-
-            var workingDir = workingDirArg == String.Empty ? null : workingDirArg;
-            if (!Win32Api.CreateProcessW(
-                    exePath,
-                    cmd,
-                    lpProcessAttributes: IntPtr.Zero,
-                    lpThreadAttributes: IntPtr.Zero,
-                    bInheritHandles: false,
-                    dwCreationFlags: flags,
-                    lpEnvironment: null,
-                    lpCurrentDirectory: workingDir,
-                    lpStartupInfo: ref si,
-                    lpProcessInformation: out pi
-                ))
-            {
-                var err = Marshal.GetLastWin32Error();
-                throw new Exception($"Error while creating process: 0x{err:X}");
-            }
-            
-            Logger.WriteLine($"[{pi.dwProcessId}] Process is successfully created");
-        }
 
         public static void InjectOverlayIntoProcess(uint pid, string steamDir, Dictionary<string, string> envs)
         {

@@ -15,10 +15,6 @@
                 <TextBox Margin="10,0,0,0" Text="{Binding Settings.DefaultSteamDir}"/>
             </DockPanel>
             <DockPanel Margin="0,10,0,0">
-                <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsResumingDelayLabel}" VerticalAlignment="Center" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsResumingDelayToolTip}"/>
-                <TextBox Margin="10,0,0,0" Text="{Binding Settings.DefaultResumingDelay}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsResumingDelayToolTip}"/>
-            </DockPanel>
-            <DockPanel Margin="0,10,0,0">
                 <TextBlock Text="App ID:" VerticalAlignment="Center" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsAppIdToolTip}"/>
                 <TextBox Margin="10,0,0,0" Text="{Binding Settings.DefaultGameId}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsAppIdToolTip}"/>
             </DockPanel>

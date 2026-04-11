@@ -8,8 +8,8 @@
 	<sys:String x:Key="LOCSteamOverlay_SettingsSaveButtonText">Сохранить</sys:String>
 	<sys:String x:Key="LOCSteamOverlay_SettingsCancelButtonText">Отменить</sys:String>
 	
-    <sys:String x:Key="LOCSteamOverlay_GameSettingsLaunchSettingsTitle">Настройки запуска</sys:String>
-    <sys:String x:Key="LOCSteamOverlay_GameSettingsExePathLabel">Путь к исполняемому файлу:</sys:String>
+    <sys:String x:Key="LOCSteamOverlay_GameSettingsInjectorSettingsTitle">Настройки инжектора оверлея</sys:String>
+    <sys:String x:Key="LOCSteamOverlay_GameSettingsProcessNameLabel">Имя процесса:</sys:String>
 	<sys:String x:Key="LOCSteamOverlay_GameSettingsWorkDirLabel">Рабочая папка:</sys:String>
 	<sys:String x:Key="LOCSteamOverlay_GameSettingsArgumentsLabel">Аргументы:</sys:String>
 	<sys:String x:Key="LOCSteamOverlay_GameSettingsResumingDelayLabel">Задержка возобновления процесса игры (мс):</sys:String>
