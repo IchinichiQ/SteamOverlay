@@ -6,7 +6,7 @@ namespace SteamOverlay.Settings.Models
     public class SteamOverlaySettings : ObservableObject
     {
         private string _steamDir = String.Empty;
-        private int _gameId = 0;
+        private ulong _gameId = 0;
         private bool _ENABLE_VK_LAYER_VALVE_steam_overlay_1 = true;
         private bool _isEmptySteamDirMessageViewed = false;
 
@@ -16,7 +16,7 @@ namespace SteamOverlay.Settings.Models
             set => SetValue(ref _steamDir, value);
         }
 
-        public int DefaultGameId
+        public ulong DefaultGameId
         {
             get => _gameId;
             set => SetValue(ref _gameId, value);

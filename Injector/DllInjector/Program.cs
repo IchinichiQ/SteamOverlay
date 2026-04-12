@@ -46,7 +46,7 @@ namespace DllInjector
 
                 var variables = new Dictionary<string, string>
                 {
-                    { "SteamOverlayGameId", config.gameId },
+                    { "SteamOverlayGameId", config.GameId.ToString() },
                     { "ENABLE_VK_LAYER_VALVE_steam_overlay_1", config.ENABLE_VK_LAYER_VALVE_steam_overlay_1 ? "1" : "0" }
                 };
 
@@ -91,22 +91,22 @@ namespace DllInjector
         
         private static void ValidateConfig(InjectorConfig config)
         {
-            if (!Directory.Exists(config.steamDir))
+            if (!Directory.Exists(config.SteamDir))
             {
                 throw new DirectoryNotFoundException("Steam directory doesn't exists!");
             }
 
-            if (!File.Exists(Path.Combine(config.steamDir, "GameOverlayRenderer64.dll")))
+            if (!File.Exists(Path.Combine(config.SteamDir, "GameOverlayRenderer64.dll")))
             {
                 throw new FileNotFoundException("There is no GameOverlayRenderer64.dll file in the steam directory!");
             }
 
-            if (!File.Exists(Path.Combine(config.steamDir, "GameOverlayRenderer.dll")))
+            if (!File.Exists(Path.Combine(config.SteamDir, "GameOverlayRenderer.dll")))
             {
                 throw new FileNotFoundException("There is no GameOverlayRenderer.dll file in the steam directory!");
             }
 
-            if (!Directory.Exists(config.workingDir))
+            if (!Directory.Exists(config.WorkingDir))
             {
                 throw new DirectoryNotFoundException("Working directory doesn't exists!");
             }
@@ -123,8 +123,8 @@ namespace DllInjector
             {
                 try
                 {
-                    var pid = WaitForProcess(config.processName);
-                    InjectOverlayIntoProcess((uint)pid, config.steamDir, environmentVariables);
+                    var pid = WaitForProcess(config.ProcessName);
+                    InjectOverlayIntoProcess((uint)pid, config.SteamDir, environmentVariables);
 
                     Logger.WriteLine("Overlay injected");
 

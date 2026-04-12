@@ -39,7 +39,7 @@ namespace SteamOverlay.Settings
                 return;
             }
             
-            ConfigData.steamDir = steamDir;
+            ConfigData.SteamDir = steamDir;
         }
 
         private void ButtonBrowseExeFile_Click(object sender, RoutedEventArgs e)
@@ -51,7 +51,7 @@ namespace SteamOverlay.Settings
                 return;
             }
             
-            ConfigData.processName = filename;
+            ConfigData.ProcessName = filename;
         }
 
         private void ButtonBrowseWorkingDir_Click(object sender, RoutedEventArgs e)
@@ -62,7 +62,7 @@ namespace SteamOverlay.Settings
                 return;
             }
             
-            ConfigData.workingDir = workingDir;
+            ConfigData.WorkingDir = workingDir;
         }
 
         private void ButtonCancel_Click(object sender, RoutedEventArgs e)

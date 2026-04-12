@@ -27,12 +27,12 @@
             <DockPanel Margin="0,0,0,0">
                 <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsProcessNameLabel}" Style="{StaticResource LabelTextbox}"/>
                 <Button Margin="10,0,0,0" Content="{DynamicResource LOCSteamOverlay_SettingsBrowseButtonText}" DockPanel.Dock="Right" Click="ButtonBrowseExeFile_Click"/>
-                <TextBox Margin="10,0,0,0" Text="{Binding ConfigData.processName}"/>
+                <TextBox Margin="10,0,0,0" Text="{Binding ConfigData.ProcessName}"/>
             </DockPanel>
             <DockPanel Margin="0,10,0,0">
                 <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsWorkDirLabel}" Style="{StaticResource LabelTextbox}"/>
                 <Button Margin="10,0,0,0" Content="{DynamicResource LOCSteamOverlay_SettingsBrowseButtonText}" DockPanel.Dock="Right" Click="ButtonBrowseWorkingDir_Click"/>
-                <TextBox Margin="10,0,0,0" Text="{Binding ConfigData.workingDir}"/>
+                <TextBox Margin="10,0,0,0" Text="{Binding ConfigData.WorkingDir}"/>
             </DockPanel>
 
             <Label Content="{DynamicResource LOCSteamOverlay_GameSettingsSteamOverlaySettingsTitle}" Margin="0,20,0,5"/>
@@ -40,12 +40,12 @@
             <DockPanel>
                 <TextBlock Text="{DynamicResource LOCSteamOverlay_GameSettingsSteamDirectoryLabel}" Style="{StaticResource LabelTextbox}"/>
                 <Button Margin="10,0,0,0" Content="{DynamicResource LOCSteamOverlay_SettingsBrowseButtonText}" DockPanel.Dock="Right" Click="ButtonBrowseSteamDir_Click"/>
-                <TextBox Margin="10,0,0,0" Text="{Binding ConfigData.steamDir}"/>
+                <TextBox Margin="10,0,0,0" Text="{Binding ConfigData.SteamDir}"/>
             </DockPanel>
             <DockPanel Margin="0,10,0,0">
                 <TextBlock Text="App ID:" Style="{StaticResource LabelTextbox}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsAppIdToolTip}"/>
                 <Button Margin="10,0,0,0" Content="{DynamicResource LOCSteamOverlay_GameSettingsSearchButtonText}" DockPanel.Dock="Right" Click="ButtonSearchGame_Click"/>
-                <TextBox Margin="10,0,0,0" x:Name="TextBoxGameId" Text="{Binding ConfigData.gameId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsAppIdToolTip}"/>
+                <TextBox Margin="10,0,0,0" x:Name="TextBoxGameId" Text="{Binding ConfigData.GameId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsAppIdToolTip}"/>
             </DockPanel>
             <CheckBox IsChecked="{Binding ConfigData.ENABLE_VK_LAYER_VALVE_steam_overlay_1}" Content="ENABLE__VK__LAYER__VALVE__steam__overlay__1" Margin="0,10,0,0" ToolTip="{DynamicResource LOCSteamOverlay_GameSettingsEnableVulkanLayerToolTip}"/>
         </StackPanel>

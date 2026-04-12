@@ -25,7 +25,7 @@ namespace SteamOverlay.Settings.Models
             }
         }
 
-        public string steamDir
+        public string SteamDir
         {
             get => _gameConfig.InjectorConfig.SteamDir;
             set
@@ -34,7 +34,7 @@ namespace SteamOverlay.Settings.Models
                 NotifyPropertyChanged();
             }
         }
-        public string processName
+        public string ProcessName
         {
             get => _gameConfig.InjectorConfig.ProcessName;
             set
@@ -43,7 +43,7 @@ namespace SteamOverlay.Settings.Models
                 NotifyPropertyChanged();
             }
         }
-        public string workingDir
+        public string WorkingDir
         {
             get => _gameConfig.InjectorConfig.WorkingDir;
             set
@@ -52,7 +52,7 @@ namespace SteamOverlay.Settings.Models
                 NotifyPropertyChanged();
             }
         }
-        public int gameId
+        public ulong GameId
         {
             get => _gameConfig.InjectorConfig.GameId;
             set

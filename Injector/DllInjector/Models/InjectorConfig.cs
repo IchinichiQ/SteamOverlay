@@ -1,20 +1,21 @@
 namespace DllInjector.Models
 {
+    // TODO: Use one config class for injector and plugin (move to common solution)
     public class InjectorConfig
     {
-        public string steamDir { get; set; }
-        public string processName { get; set; }
-        public string workingDir { get; set; }
-        public string gameId { get; set; }
+        public string SteamDir { get; set; }
+        public string ProcessName { get; set; }
+        public string WorkingDir { get; set; }
+        public ulong GameId { get; set; }
         public bool ENABLE_VK_LAYER_VALVE_steam_overlay_1 { get; set; }
         
         public override string ToString()
         {
             return 
-                $"steamDir: {steamDir}\n" +
-                $"processName: {processName}\n" +
-                $"workingDir: {workingDir}\n" +
-                $"gameId: {gameId}\n" +
+                $"SteamDir: {SteamDir}\n" +
+                $"ProcessName: {ProcessName}\n" +
+                $"WorkingDir: {WorkingDir}\n" +
+                $"GameId: {GameId}\n" +
                 $"ENABLE_VK_LAYER_VALVE_steam_overlay_1: {ENABLE_VK_LAYER_VALVE_steam_overlay_1}";
         }
     }
