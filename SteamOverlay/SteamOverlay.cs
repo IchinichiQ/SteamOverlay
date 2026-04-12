@@ -10,57 +10,62 @@ using System.Linq;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Controls;
-using static SteamOverlay.ConfigUtils;
+using SteamOverlay.Settings;
+using SteamOverlay.Settings.Models;
 
 namespace SteamOverlay
 {
     public class SteamOverlay : GenericPlugin
     {
-        private static readonly ILogger logger = LogManager.GetLogger();
-        private readonly ConfigUtils _configUtils;
-
-        private SteamOverlaySettingsViewModel settings { get; set; }
-
         public override Guid Id { get; } = Guid.Parse("eb3e6a5d-4bc1-4738-a328-cc62959750a1");
-
-        private string InjectorPath;
-        private string GameConfigsDir;
+        
+        private readonly ConfigUtils _configUtils;
+        private readonly SteamOverlaySettingsViewModel _settings;
+        private readonly string _injectorPath;
 
         public SteamOverlay(IPlayniteAPI api) : base(api)
         {
-            string extensionInstallDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            InjectorPath = Path.Combine(extensionInstallDir, "DllInjector.exe");
-            GameConfigsDir = Path.Combine(GetPluginUserDataPath(), "GameConfigs");
-            settings = new SteamOverlaySettingsViewModel(this);
             Properties = new GenericPluginProperties
             {
                 HasSettings = true
             };
+            
+            var extensionInstallDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            _injectorPath = Path.Combine(extensionInstallDir, "DllInjector.exe");
+            
+            _settings = new SteamOverlaySettingsViewModel(this);
+            _configUtils = new ConfigUtils(this);
 
-            if (String.IsNullOrEmpty(settings.Settings.DefaultSteamDir))
+            InitSettings();
+        }
+
+        private void InitSettings()
+        {
+            if (String.IsNullOrEmpty(_settings.Settings.DefaultSteamDir))
             {
-                string steamDir = GetSteamDir();
-                if (steamDir == null && !settings.Settings.IsEmptySteamDirMessageViewed)
+                var steamDir = GetSteamDir();
+                if (steamDir == null && !_settings.Settings.IsEmptySteamDirMessageViewed)
                 {
-                    PlayniteApi.Dialogs.ShowMessage(ResourceProvider.GetString("LOCSteamOverlay_MessageBoxTextEmptySteamDir"), ResourceProvider.GetString("LOCSteamOverlay_MessageBoxTitleEmptySteamDir"), MessageBoxButton.OK);
-                    settings.Settings.IsEmptySteamDirMessageViewed = true;
-                    settings.EndEdit();
+                    PlayniteApi.Dialogs.ShowMessage(
+                        ResourceProvider.GetString("LOCSteamOverlay_MessageBoxTextEmptySteamDir"),
+                        ResourceProvider.GetString("LOCSteamOverlay_MessageBoxTitleEmptySteamDir"),
+                        MessageBoxButton.OK);
+                    _settings.Settings.IsEmptySteamDirMessageViewed = true;
+                    _settings.EndEdit();
                 }
                 else
                 {
-                    settings.Settings.DefaultSteamDir = steamDir;
+                    _settings.Settings.DefaultSteamDir = steamDir;
                 }
             }
-
-            _configUtils = new ConfigUtils(this);
         }
-
+        
         public override IEnumerable<GameMenuItem> GetGameMenuItems(GetGameMenuItemsArgs args)
         {
             // TODO: Add support for selecting multiple games for an operation
-            Game selectedGame = args.Games.First();
+            var selectedGame = args.Games.First();
             var menuSection = ResourceProvider.GetString("LOCSteamOverlay_MenuSectionName");
-            bool isOverlayEnabled = _configUtils.IsGameConfigExists(selectedGame);
+            var isOverlayEnabled = _configUtils.IsGameConfigExists(selectedGame);
 
             return new List<GameMenuItem>
             {
@@ -117,7 +122,7 @@ namespace SteamOverlay
             
             if (_configUtils.IsGameConfigExists(game))
             {
-                injectorConfig = _configUtils.LoadGameConfig(game).injectorConfig;
+                injectorConfig = _configUtils.LoadGameConfig(game).InjectorConfig;
             }
             else
             {
@@ -130,37 +135,51 @@ namespace SteamOverlay
                 }
                 
                 injectorConfig = new InjectorConfig();
-                injectorConfig.steamDir = settings.Settings.DefaultSteamDir;
-                injectorConfig.processName = processName;
+                injectorConfig.SteamDir = _settings.Settings.DefaultSteamDir;
+                injectorConfig.ProcessName = processName;
                 // TODO: Playnite working directory interpritation
-                injectorConfig.workingDir = game.InstallDirectory;
-                injectorConfig.gameId = settings.Settings.DefaultGameId;
-                injectorConfig.ENABLE_VK_LAYER_VALVE_steam_overlay_1 = settings.Settings.DefaultENABLE_VK_LAYER_VALVE_steam_overlay_1;
+                injectorConfig.WorkingDir = game.InstallDirectory;
+                injectorConfig.GameId = _settings.Settings.DefaultGameId;
+                injectorConfig.ENABLE_VK_LAYER_VALVE_steam_overlay_1 = _settings.Settings.DefaultENABLE_VK_LAYER_VALVE_steam_overlay_1;
             }
 
-            GameConfig gameConfig = new GameConfig();
-            gameConfig.injectorConfig = injectorConfig;
+            var gameConfig = new GameConfig();
+            gameConfig.InjectorConfig = injectorConfig;
 
             _configUtils.SaveGameConfig(game, gameConfig);
         }
 
         private void RemoveOverlayFromGame(Game game)
         {
-            ConfigUtils config = new ConfigUtils(this);
-            GameConfig gameConfig = config.LoadGameConfig(game);
+            // TODO: Fix disabling of overlay
+            var config = new ConfigUtils(this);
+            var gameConfig = config.LoadGameConfig(game);
         }
 
         private string GetSteamDir()
         {
-            string steamDir = (string)Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", null);
+            var steamDir = (string)Microsoft.Win32.Registry.GetValue(@"HKEY_CURRENT_USER\SOFTWARE\Valve\Steam", "SteamPath", null);
             if (steamDir != null)
+            {
                 // The path is stored in a registry with "/" instead of "\", so we need to fix it
                 return Path.GetFullPath(steamDir);
+            }
 
-            string defaultSteamDir = @"C:\Program Files (x86)\Steam";
-            if (Directory.Exists(defaultSteamDir))
-                return defaultSteamDir;
-
+            var defaultSteamDirs = new[]
+            {
+                @"C:\Program Files (x86)\Steam",
+                @"D:\Program Files (x86)\Steam",
+                @"C:\Program Files\Steam",
+                @"D:\Program Files\Steam"
+            };
+            foreach (var defaultSteamDir in defaultSteamDirs)
+            {
+                if (Directory.Exists(defaultSteamDir))
+                {
+                    return defaultSteamDir;
+                }
+            }
+            
             return null;
         }
 
@@ -175,7 +194,7 @@ namespace SteamOverlay
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = InjectorPath,
+                    FileName = _injectorPath,
                     Arguments = $"-configPath \"{_configUtils.GetGameConfigPath(args.Game)}\"",
                     UseShellExecute = false,
                     CreateNoWindow = true
@@ -187,7 +206,7 @@ namespace SteamOverlay
 
         public override ISettings GetSettings(bool firstRunSettings)
         {
-            return settings;
+            return _settings;
         }
 
         public override UserControl GetSettingsView(bool firstRunSettings)

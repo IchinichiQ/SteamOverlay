@@ -2,27 +2,16 @@
 using Playnite.SDK;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web;
+using SteamOverlay.SteamGameSearch.Models;
 
 namespace SteamOverlay.SteamGameSearch
 {
     internal class SteamGameSearch
     {
-        ILogger logger = LogManager.GetLogger();
-
-        public class SteamGame
-        {
-            public string Name { get; set; }
-            public string ReleaseDate { get; set; }
-            public int Id { get; set; }
-            public string BannerUrl { get; set; }
-        }
-
+        private const string SearchUrl = "https://store.steampowered.com/search/?term={0}&l={1}";
         // From https://partner.steamgames.com/doc/store/localization, table at the bottom
-        private Dictionary<string, string> playniteToSteamLanguageDict = new Dictionary<string, string>
+        private static readonly Dictionary<string, string> PlayniteToSteamLanguageDict = new Dictionary<string, string>
         {
             {"ar_SA", "arabic"},
             {"zh_CN", "schinese"},
@@ -50,26 +39,26 @@ namespace SteamOverlay.SteamGameSearch
             {"uk_UA", "ukrainian"},
             {"vi_VN", "vietnamese"}
         };
-
-        private string SearchUrl = "https://store.steampowered.com/search/?term={0}&l={1}";
+        
+        private readonly ILogger _logger = LogManager.GetLogger();
 
         public List<SteamGame> SearchGameByName(string name, string playniteLanguage)
         {
-            List<SteamGame> foundGames = new List<SteamGame>();
+            var foundGames = new List<SteamGame>();
 
-            string steamLanguage = "english";
-            if (playniteToSteamLanguageDict.ContainsKey(playniteLanguage))
-                steamLanguage = playniteToSteamLanguageDict[playniteLanguage];
+            var steamLanguage = "english";
+            if (PlayniteToSteamLanguageDict.ContainsKey(playniteLanguage))
+                steamLanguage = PlayniteToSteamLanguageDict[playniteLanguage];
 
-            HtmlWeb web = new HtmlWeb();
-            string searchUrl = String.Format(SearchUrl, HttpUtility.HtmlEncode(name), steamLanguage);
-            logger.Info($"Making a request to {searchUrl}");
+            var web = new HtmlWeb();
+            var searchUrl = String.Format(SearchUrl, HttpUtility.HtmlEncode(name), steamLanguage);
+            _logger.Info($"Making a request to {searchUrl}");
             var htmlDoc = web.Load(searchUrl);
-            logger.Info($"Html downloaded");
+            _logger.Info($"Html downloaded");
             
-            foreach (HtmlNode node in htmlDoc.DocumentNode.SelectNodes("//a[contains(@class,'search_result_row')]"))
+            foreach (var node in htmlDoc.DocumentNode.SelectNodes("//a[contains(@class,'search_result_row')]"))
             {
-                SteamGame game = new SteamGame();
+                var game = new SteamGame();
 
                 game.Id = int.Parse(node.GetAttributeValue("data-ds-appid", "-1"));
                 if (game.Id == -1)
@@ -82,7 +71,7 @@ namespace SteamOverlay.SteamGameSearch
                 foundGames.Add(game);
             }
 
-            logger.Info($"Found {foundGames.Count} games");
+            _logger.Info($"Found {foundGames.Count} games");
 
             return foundGames;
         }

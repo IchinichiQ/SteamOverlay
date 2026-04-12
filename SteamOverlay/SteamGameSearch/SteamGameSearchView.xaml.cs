@@ -1,20 +1,9 @@
-﻿using Playnite.SDK;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using SteamOverlay.SteamGameSearch.Models;
 using static SteamOverlay.SteamGameSearch.SteamGameSearch;
 
 namespace SteamOverlay.SteamGameSearch
@@ -24,17 +13,18 @@ namespace SteamOverlay.SteamGameSearch
     /// </summary>
     public partial class SteamGameSearchView : UserControl
     {
-        private readonly SteamOverlay plugin;
-        private readonly ObservableCollection<SteamGame> listGames = new ObservableCollection<SteamGame>();
-        internal SteamGame selectedGame = null;
-        internal bool isLoading = false;
+        public SteamGame selectedGame = null;
+        public bool isLoading = false;
+        
+        private readonly SteamOverlay _plugin;
+        private readonly ObservableCollection<SteamGame> _listGames = new ObservableCollection<SteamGame>();
 
         public SteamGameSearchView(SteamOverlay plugin, string defaultSearch)
         {
             InitializeComponent();
-            ListBoxGames.ItemsSource = listGames;
+            ListBoxGames.ItemsSource = _listGames;
 
-            this.plugin = plugin;
+            _plugin = plugin;
 
             TextBoxGameName.Text = defaultSearch;
             PerformSearch(defaultSearch);
@@ -42,20 +32,23 @@ namespace SteamOverlay.SteamGameSearch
 
         private async void PerformSearch(string name)
         {
+            // TODO: Handle errors
             GridMain.IsEnabled = false;
             GridLoading.Visibility = Visibility.Visible;
 
             List<SteamGame> searchResult = null;
             await Task.Run(() =>
             {
-                SteamGameSearch searcher = new SteamGameSearch();
-                searchResult = searcher.SearchGameByName(name, plugin.PlayniteApi.ApplicationSettings.Language);
+                var searcher = new SteamGameSearch();
+                searchResult = searcher.SearchGameByName(name, _plugin.PlayniteApi.ApplicationSettings.Language);
             });
 
-            listGames.Clear();
+            _listGames.Clear();
             foreach (var game in searchResult)
-                listGames.Add(game);
-
+            {
+                _listGames.Add(game);
+            }
+            
             GridMain.IsEnabled = true;
             GridLoading.Visibility = Visibility.Hidden;
         }
